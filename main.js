@@ -1,74 +1,64 @@
-import { loadHomework, assignHomework } from './homeworkManager.js';
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Python Homework Compiler</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/pyodide/v0.23.4/full/pyodide.js"></script>
+</head>
+<body>
+  <header>
+    <h1>ABC Public School</h1>
+    <h2>Python Homework Compiler</h2>
+  </header>
 
-let pyodide;
-let editor;
+  <div id="login-screen">
+    <button id="student-login-link">Student Login</button>
+    <button id="teacher-login-link">Teacher Login</button>
+  </div>
 
-async function initPyodide() {
-  pyodide = await loadPyodide();
-  console.log('Pyodide loaded');
-}
+  <div id="student-login" class="hidden">
+    <input type="text" id="student-name" placeholder="Name" />
+    <input type="text" id="student-class" placeholder="Class" />
+    <input type="text" id="student-roll" placeholder="Roll Number" />
+    <button id="login-student">Login</button>
+    <button id="back-to-login-student">Back</button>
+  </div>
 
-window.onload = async function () {
-  await initPyodide();
+  <div id="teacher-login" class="hidden">
+    <input type="password" id="teacher-pass" placeholder="Enter Teacher Password" />
+    <button id="login-teacher">Login</button>
+    <button id="back-to-login-teacher">Back</button>
+  </div>
 
-  editor = ace.edit("editor");
-  editor.setTheme("ace/theme/chrome");
-  editor.session.setMode("ace/mode/python");
+  <div id="student-dashboard" class="hidden">
+    <h2>Welcome, <span id="student-name-display"></span> (<span id="student-class-display"></span>)</h2>
+    <h3>Assigned Homework</h3>
+    <pre id="homework-display"></pre>
 
-  document.getElementById('student-login-btn').onclick = () => login('student');
-  document.getElementById('teacher-login-btn').onclick = () => login('teacher');
-};
+    <h3>Your Code</h3>
+    <textarea id="code-editor">print("my world")</textarea>
+    <button id="run-student-code">▶ Run</button>
+    <button id="submit-student-code">📤 Submit</button>
+    <pre id="output">✅ No Output</pre>
+  </div>
 
-function login(role) {
-  const name = document.getElementById('name').value.trim();
-  const roll = document.getElementById('roll').value.trim();
-  const cls = document.getElementById('class').value.trim();
-  const password = document.getElementById('password').value;
+  <div id="teacher-dashboard" class="hidden">
+    <h2>Teacher Dashboard</h2>
+    <input type="text" id="homework-class" placeholder="Class" />
+    <textarea id="homework-text" placeholder="Enter Homework"></textarea>
+    <button id="assign-homework">Assign Homework</button>
+    <h3>Try Student Code</h3>
+    <textarea id="teacher-code" placeholder="Write Python code..."></textarea>
+    <button id="run-teacher-code">▶ Run Code</button>
+    <pre id="teacher-output">✅ No Output</pre>
+  </div>
 
-  if (role === 'teacher') {
-    if (name !== 'teacher' || password !== 'admin') return alert('Invalid teacher credentials');
-    document.getElementById('login-page').classList.add('hidden');
-    document.getElementById('teacher-dashboard').classList.remove('hidden');
-    return;
-  }
+  <footer>
+    <p>Made by Sona O. K.</p>
+  </footer>
 
-  if (!name || !roll || !cls) return alert('Fill all student fields');
-  document.getElementById('login-page').classList.add('hidden');
-  document.getElementById('student-dashboard').classList.remove('hidden');
-  document.getElementById('student-info').textContent = `Welcome, ${name} (${roll})`;
-  loadHomework(cls).then(hw => {
-    document.getElementById('homework-text-display').textContent = hw || 'No homework assigned';
-  });
-}
-
-window.runCode = async function () {
-  const code = editor.getValue();
-  try {
-    const result = await pyodide.runPythonAsync(code);
-    document.getElementById('output').textContent = result !== undefined ? result.toString() : '✅ No Output';
-  } catch (err) {
-    document.getElementById('output').textContent = '❌ ' + err;
-  }
-};
-
-window.submitCode = function () {
-  alert('Code submitted!');
-};
-
-window.assignHomeworkToClass = function () {
-  const cls = document.getElementById('homework-class').value.trim();
-  const hw = document.getElementById('homework-text').value.trim();
-  if (!cls || !hw) return alert('Fill all fields');
-  assignHomework(cls, hw);
-  alert('Homework assigned to Class ' + cls);
-};
-
-window.runTeacherCode = async function () {
-  const code = document.getElementById('teacher-code').value;
-  try {
-    const result = await pyodide.runPythonAsync(code);
-    document.getElementById('teacher-output').textContent = result !== undefined ? result.toString() : '✅ No Output';
-  } catch (err) {
-    document.getElementById('teacher-output').textContent = '❌ ' + err;
-  }
-};
+  <script type="module" src="main.js"></script>
+</body>
+</html>
