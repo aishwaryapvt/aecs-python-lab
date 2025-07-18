@@ -1,161 +1,82 @@
-let pyodideReadyPromise = loadPyodideAndPackages();
+// main.js
 
-let homeworkData = {};
-let submissions = {};
+let pyodideReadyPromise = loadPyodideAndPackages();
 
 async function loadPyodideAndPackages() {
   let pyodide = await loadPyodide();
-  await pyodide.loadPackage(["micropip"]);
-  await pyodide.runPythonAsync(`
-    import sys
-    import io
-    sys.stdout = io.StringIO()
-    sys.stderr = io.StringIO()
-  `);
+  await pyodide.loadPackage("micropip");
   return pyodide;
 }
 
-// ------------------ Student Login Flow ------------------
-document.getElementById("student-login-link").onclick = () => {
-  document.getElementById("login-screen").classList.add("hidden");
-  document.getElementById("student-login").classList.remove("hidden");
-};
-
-document.getElementById("back-to-login-student").onclick = () => {
-  document.getElementById("student-login").classList.add("hidden");
-  document.getElementById("login-screen").classList.remove("hidden");
-};
-
-document.getElementById("login-student").onclick = () => {
-  const name = document.getElementById("student-name").value.trim();
-  const className = document.getElementById("student-class").value.trim();
-  const roll = document.getElementById("student-roll").value.trim();
-
-  if (!name || !className || !roll) return alert("Please fill all fields!");
-
-  document.getElementById("student-name-display").textContent = name;
-  document.getElementById("student-class-display").textContent = className;
-
-  document.getElementById("student-login").classList.add("hidden");
-  document.getElementById("student-dashboard").classList.remove("hidden");
-
-  const homework = homeworkData[className] || "No homework assigned.";
-  document.getElementById("homework-display").textContent = homework;
-};
-
-// ------------------ Teacher Login Flow ------------------
-document.getElementById("teacher-login-link").onclick = () => {
-  document.getElementById("login-screen").classList.add("hidden");
-  document.getElementById("teacher-login").classList.remove("hidden");
-};
-
-document.getElementById("back-to-login-teacher").onclick = () => {
-  document.getElementById("teacher-login").classList.add("hidden");
-  document.getElementById("login-screen").classList.remove("hidden");
-};
-
-document.getElementById("login-teacher").onclick = () => {
-  const password = document.getElementById("teacher-pass").value;
-  if (password !== "teacher123") return alert("Incorrect password!");
-  document.getElementById("teacher-login").classList.add("hidden");
-  document.getElementById("teacher-dashboard").classList.remove("hidden");
-  updateClassDropdown();
-};
-
-// ------------------ Assign Homework ------------------
-function assignHomeworkToClass() {
-  const className = document.getElementById("homework-class").value.trim();
-  const homework = document.getElementById("homework-text").value.trim();
-  if (!className || !homework) return alert("Enter class and homework!");
-  homeworkData[className] = homework;
-  alert("Homework assigned!");
-  updateClassDropdown();
+function showElement(id) {
+  document.querySelectorAll(".screen").forEach(div => div.style.display = "none");
+  document.getElementById(id).style.display = "block";
 }
 
-// ------------------ Submit Code ------------------
-function submitCode() {
-  const name = document.getElementById("student-name").value.trim();
-  const className = document.getElementById("student-class").value.trim();
-  const roll = document.getElementById("student-roll").value.trim();
-  const code = document.getElementById("code-editor").value;
+// Student login
+document.getElementById("student-btn").addEventListener("click", () => {
+  showElement("student-login");
+});
 
-  const studentId = `${roll}-${name}`;
-  if (!submissions[className]) submissions[className] = {};
-  submissions[className][studentId] = { name, roll, code };
+document.getElementById("student-login-btn").addEventListener("click", () => {
+  const name = document.getElementById("name").value;
+  const roll = document.getElementById("roll").value;
+  const studentClass = document.getElementById("class").value;
 
-  alert("Code submitted successfully!");
-}
+  if (!name || !roll || !studentClass) {
+    alert("Please fill in all fields.");
+    return;
+  }
 
-// ------------------ Review Submissions ------------------
-function updateClassDropdown() {
-  const dropdown = document.getElementById("review-class-select");
-  dropdown.innerHTML = "";
+  document.getElementById("student-dashboard").style.display = "block";
+  document.getElementById("student-login").style.display = "none";
+  document.getElementById("student-name").textContent = name;
+});
 
-  Object.keys(submissions).forEach((cls) => {
-    const option = document.createElement("option");
-    option.value = cls;
-    option.textContent = cls;
-    dropdown.appendChild(option);
-  });
+// Go back from student dashboard
+document.getElementById("student-back-btn").addEventListener("click", () => {
+  showElement("login-screen");
+  document.getElementById("code").value = "";
+  document.getElementById("output").textContent = "";
+});
 
-  dropdown.onchange = () => {
-    const cls = dropdown.value;
-    const ul = document.getElementById("submission-list");
-    ul.innerHTML = "";
-    if (!submissions[cls]) return;
+// Teacher login redirect
+document.getElementById("teacher-btn").addEventListener("click", () => {
+  window.location.href = "teacher.html";
+});
 
-    Object.entries(submissions[cls]).forEach(([id, { name, code }]) => {
-      const li = document.createElement("li");
-      li.innerHTML = `<strong>${name}</strong><pre>${code}</pre>`;
-      ul.appendChild(li);
-    });
-  };
+// Run Python code
+document.getElementById("run-code").addEventListener("click", async () => {
+  const code = document.getElementById("code").value;
 
-  dropdown.dispatchEvent(new Event("change"));
-}
+  if (!code.trim()) {
+    alert("Please enter Python code.");
+    return;
+  }
 
-// ------------------ Python Code Execution ------------------
-async function runCode() {
-  const code = document.getElementById("code-editor").value;
-  const pyodide = await pyodideReadyPromise;
+  const outputEl = document.getElementById("output");
+  outputEl.textContent = "⏳ Running...";
 
   try {
-    await pyodide.runPythonAsync(`
-      import sys
-      sys.stdout = sys.__stdout__ = sys.stderr = sys.__stderr__ = None
-      from js import console
-      import io
-      sys.stdout = io.StringIO()
-      sys.stderr = io.StringIO()
-      ${code}
-    `);
-    const output = await pyodide.runPythonAsync("sys.stdout.getvalue()");
-    const error = await pyodide.runPythonAsync("sys.stderr.getvalue()");
-    document.getElementById("output").textContent = (output + error).trim();
-  } catch (err) {
-    document.getElementById("output").textContent = `❌ Error:\n${err}`;
-  }
-}
+    let pyodide = await pyodideReadyPromise;
 
-// ------------------ Teacher Code Runner ------------------
-async function runTeacherCode() {
-  const code = document.getElementById("teacher-code").value;
-  const pyodide = await pyodideReadyPromise;
-
-  try {
-    await pyodide.runPythonAsync(`
+    let output = await pyodide.runPythonAsync(`
       import sys
-      sys.stdout = sys.__stdout__ = sys.stderr = sys.__stderr__ = None
-      from js import console
-      import io
-      sys.stdout = io.StringIO()
-      sys.stderr = io.StringIO()
-      ${code}
+      from io import StringIO
+
+      sys.stdout = StringIO()
+      sys.stderr = StringIO()
+
+      try:
+          exec("""${code}""")
+      except Exception as e:
+          print("Error:", e)
+
+      sys.stdout.getvalue() + sys.stderr.getvalue()
     `);
-    const output = await pyodide.runPythonAsync("sys.stdout.getvalue()");
-    const error = await pyodide.runPythonAsync("sys.stderr.getvalue()");
-    document.getElementById("teacher-output").textContent = (output + error).trim();
+
+    outputEl.textContent = output;
   } catch (err) {
-    document.getElementById("teacher-output").textContent = `❌ Error:\n${err}`;
+    outputEl.textContent = `❌ Unexpected Error:\n${err}`;
   }
-}
+});

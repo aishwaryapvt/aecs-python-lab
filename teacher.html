@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Teacher Dashboard</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header>
+    <h1>Teacher Dashboard</h1>
+  </header>
+
+  <div id="teacher-login" class="container">
+    <h2>Teacher Login</h2>
+    <input type="text" id="teacher-username" placeholder="Username" />
+    <input type="password" id="teacher-password" placeholder="Password" />
+    <button onclick="loginTeacher()">Login</button>
+    <button onclick="location.href='index.html'">⬅ Back to Student Login</button>
+  </div>
+
+  <div id="teacher-dashboard" class="container hidden">
+    <h2>Welcome, <span id="teacher-id"></span></h2>
+    <button onclick="logoutTeacher()">Logout</button>
+
+    <div>
+      <h3>Assign Homework</h3>
+      <input type="text" id="assign-class" placeholder="Class (e.g. 10A)" />
+      <textarea id="homework-text" placeholder="Enter homework instructions or code..."></textarea>
+      <button onclick="assignHomework()">Assign</button>
+    </div>
+
+    <div>
+      <h3>Current Homework per Class</h3>
+      <ul id="homework-list"></ul>
+    </div>
+  </div>
+
+  <footer>
+    <p>&copy; 2025 Homework Portal</p>
+  </footer>
+
+  <script src="main.js"></script>
+</body>
+</html>
