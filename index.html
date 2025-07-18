@@ -39,25 +39,27 @@
 
     <h3>Your Code</h3>
     <textarea id="code-editor">print("my world")</textarea>
-    <button onclick="runCode()">▶ Run</button>
-    <button onclick="submitCode()">📤 Submit</button>
-    <pre id="output">✅ No Output</pre>
+    <button id="run-button">▶ Run</button>
+    <button id="submit-button">📤 Submit</button>
+
+    <h3>Output</h3>
+    <pre id="output"></pre>
   </div>
 
   <div id="teacher-dashboard" class="hidden">
     <h2>Teacher Dashboard</h2>
     <input type="text" id="homework-class" placeholder="Class" />
     <textarea id="homework-text" placeholder="Enter Homework"></textarea>
-    <button onclick="assignHomeworkToClass()">Assign Homework</button>
+    <button id="assign-button">Assign Homework</button>
 
-    <h3>Submitted Solutions</h3>
-    <select id="submitted-class"></select>
-    <ul id="submitted-list"></ul>
+    <h3>Review Student Submissions</h3>
+    <select id="review-class-select"></select>
+    <ul id="submission-list"></ul>
 
     <h3>Try Student Code</h3>
     <textarea id="teacher-code" placeholder="Write Python code..."></textarea>
-    <button onclick="runTeacherCode()">▶ Run Code</button>
-    <pre id="teacher-output">✅ No Output</pre>
+    <button id="run-teacher-button">▶ Run Code</button>
+    <pre id="teacher-output"></pre>
   </div>
 
   <footer>
