@@ -100,3 +100,8 @@ function loadHomework(cls) {
   const hw = localStorage.getItem("hw-" + cls.toLowerCase()) || "No homework assigned.";
   document.getElementById("assigned-homework").textContent = hw;
 }
+
+document.getElementById("toggle-pass").addEventListener("change", function () {
+  const passInput = document.getElementById("teacher-pass");
+  passInput.type = this.checked ? "text" : "password";
+});
