@@ -4,128 +4,65 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Python Homework Portal</title>
+  <link rel="stylesheet" href="style.css" />
   <script type="module" src="main.js" defer></script>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      padding: 20px;
-      background: #f0f0f0;
-      margin: 0;
-    }
-    header {
-      text-align: center;
-      background-color: #2e3b4e;
-      color: white;
-      padding: 15px;
-      font-size: 1.4em;
-    }
-    .container {
-      max-width: 800px;
-      margin: auto;
-      background: #fff;
-      padding: 20px;
-      border-radius: 10px;
-    }
-    .hidden { display: none; }
-    textarea, input {
-      width: 100%;
-      margin-top: 5px;
-      margin-bottom: 10px;
-      padding: 10px;
-      font-family: monospace;
-      border: 1px solid #ccc;
-      border-radius: 5px;
-    }
-    button {
-      padding: 10px 15px;
-      margin: 5px 0;
-      border: none;
-      background: #007BFF;
-      color: white;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-    button:hover {
-      background: #0056b3;
-    }
-    hr {
-      margin: 20px 0;
-    }
-    pre {
-      background: #f4f4f4;
-      padding: 10px;
-      white-space: pre-wrap;
-      border: 1px solid #ccc;
-      border-radius: 5px;
-    }
-    .back-btn {
-      background: #6c757d;
-    }
-  </style>
 </head>
 <body>
   <header>
-    Atomic Energy Central School No. 3, Tarapur <br/>
-    <small>Made by Sona O.K.</small>
+    <h1>Atomic Energy Central School No. 3, Tarapur</h1>
+    <h2>Python Homework Assignment Portal</h2>
+    <button id="theme-toggle">🌙 Theme</button>
   </header>
 
-  <div class="container">
-
-    <!-- Home/Login -->
-    <div id="login-form">
-      <h2>Student Login</h2>
-      <input type="text" id="student-name" placeholder="Name" />
-      <input type="text" id="student-roll" placeholder="Roll Number" />
-      <input type="text" id="student-class" placeholder="Class" />
-      <button id="student-login">Login as Student</button>
-
-      <hr />
-      <p style="text-align:center;">OR</p>
-      <button id="show-teacher-login">Login as Teacher</button>
-    </div>
-
-    <!-- Teacher Login -->
-    <div id="teacher-login-form" class="hidden">
-      <h2>Teacher Login</h2>
-      <input type="password" id="teacher-pass" placeholder="Teacher Password"/>
-      <button id="teacher-login">Login</button>
-      <button class="back-btn" id="back-to-home1">Back</button>
-    </div>
-
-    <!-- Student Panel -->
-    <div id="student-panel" class="hidden">
-      <h2>Welcome, <span id="student-id"></span></h2>
-      <h3>Assigned Homework</h3>
-      <p id="assigned-homework"></p>
-
-      <h3>Your Code</h3>
-      <textarea id="student-code" rows="10" placeholder="Write Python code here..."></textarea>
-      <button id="run-code">Run</button>
-      <button id="submit-code">Submit</button>
-
-      <h3>Output</h3>
-      <pre id="code-output"></pre>
-      <button class="back-btn" id="back-to-home2">Back</button>
-    </div>
-
-    <!-- Teacher Panel -->
-    <div id="teacher-panel" class="hidden">
-      <h2>Teacher Dashboard</h2>
-
-      <h3>Assign Homework</h3>
-      <input type="text" id="target-class" placeholder="Class"/>
-      <textarea id="homework-text" rows="4" placeholder="Enter homework instructions..."></textarea>
-      <button id="set-homework">Assign</button>
-
-      <hr/>
-      <h3>Submissions</h3>
-      <div id="all-submissions"></div>
-
-      <button class="back-btn" id="back-to-home3">Back</button>
-    </div>
-
+  <div id="login-form">
+    <h3>Student Login</h3>
+    <input type="text" id="student-name" placeholder="Name"/>
+    <input type="text" id="student-roll" placeholder="Roll Number"/>
+    <input type="text" id="student-class" placeholder="Class"/>
+    <button id="student-login">Login as Student</button>
+    <p class="link-like" id="show-teacher-login">🔐 Login as Teacher</p>
   </div>
 
+  <div id="teacher-login-form" class="hidden">
+    <h3>Teacher Login</h3>
+    <input type="password" id="teacher-pass" placeholder="Teacher Password"/>
+    <button id="teacher-login">Login as Teacher</button>
+    <p class="link-like" id="show-student-login">👨‍🎓 Back to Student Login</p>
+  </div>
+
+  <!-- Student Panel -->
+  <div id="student-panel" class="hidden">
+    <h3>Welcome, <span id="student-id"></span></h3>
+    <h4>Assigned Homework</h4>
+    <p id="assigned-homework">Loading...</p>
+
+    <h4>Your Code</h4>
+    <div id="editor-container"></div>
+    <button id="run-code">▶ Run</button>
+    <button id="submit-code">📤 Submit</button>
+
+    <h4>Output</h4>
+    <pre id="code-output"></pre>
+    <button class="back-home">⬅ Back</button>
+  </div>
+
+  <!-- Teacher Panel -->
+  <div id="teacher-panel" class="hidden">
+    <h3>Teacher Dashboard</h3>
+
+    <h4>Assign Homework</h4>
+    <input type="text" id="target-class" placeholder="Class"/>
+    <textarea id="homework-text" rows="4" placeholder="Enter homework instructions..."></textarea>
+    <button id="set-homework">Assign</button>
+
+    <hr/>
+    <h4>Submissions</h4>
+    <div id="all-submissions"></div>
+    <button class="back-home">⬅ Back</button>
+  </div>
+
+  <footer>Made by Sona O.K.</footer>
   <script src="https://cdn.jsdelivr.net/pyodide/v0.25.1/full/pyodide.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.14/ace.js"></script>
 </body>
 </html>

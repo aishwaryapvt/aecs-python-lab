@@ -1,49 +1,50 @@
 body {
   font-family: Arial, sans-serif;
-  background-color: #f0f0f5;
-  margin: 0;
-  padding: 0;
+  padding: 10px;
+  background-color: #f7f7f7;
+  color: #222;
+  transition: all 0.3s;
 }
-
-.container {
-  max-width: 600px;
-  margin: 40px auto;
-  padding: 20px;
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+.dark {
+  background-color: #121212;
+  color: #eee;
 }
-
-input, textarea {
+header {
+  text-align: center;
+}
+textarea, input {
   width: 100%;
+  margin-top: 5px;
   margin-bottom: 10px;
   padding: 10px;
-  border-radius: 6px;
-  border: 1px solid #ccc;
-  font-size: 1rem;
 }
-
 button {
-  padding: 10px 15px;
-  font-size: 1rem;
-  border: none;
-  background-color: #4CAF50;
-  color: white;
-  border-radius: 6px;
-  cursor: pointer;
+  padding: 8px 12px;
+  margin: 5px 0;
 }
-
-button:hover {
-  background-color: #45a049;
+pre {
+  background: #eee;
+  padding: 10px;
+  white-space: pre-wrap;
 }
-
+.dark pre {
+  background: #1e1e1e;
+}
 .hidden {
   display: none;
 }
-
-#output {
-  background: #eee;
-  padding: 10px;
-  border-radius: 6px;
-  margin-top: 10px;
+#editor-container {
+  height: 300px;
+  border: 1px solid #ccc;
+  margin-bottom: 10px;
+}
+footer {
+  text-align: center;
+  margin-top: 20px;
+}
+.link-like {
+  color: blue;
+  text-decoration: underline;
+  cursor: pointer;
+  font-size: 14px;
 }

@@ -1,125 +1,102 @@
-let pyodide = null;
-let db = {};
-let currentStudent = null;
-const TEACHER_PASSWORD = "12345"; // Change as needed
+let pyodide;
+let editor;
+const teacherPassword = "admin123";
 
-// Load Pyodide
-async function loadPyodideAndInit() {
+window.addEventListener("DOMContentLoaded", async () => {
   pyodide = await loadPyodide();
-}
-loadPyodideAndInit();
+  setupEditor();
+  setupEvents();
+  restoreTheme();
+});
 
-// Load from localStorage
-function loadData() {
-  const stored = localStorage.getItem("homeworkDB");
-  if (stored) db = JSON.parse(stored);
-}
-
-// Save to localStorage
-function saveData() {
-  localStorage.setItem("homeworkDB", JSON.stringify(db));
-}
-
-// UI Helpers
-function show(id) {
-  document.querySelectorAll(".container > div").forEach(div => div.classList.add("hidden"));
-  document.getElementById(id).classList.remove("hidden");
-}
-
-// Load homework for student
-function loadStudentPanel() {
-  const sid = `${currentStudent.name} (${currentStudent.roll}, ${currentStudent.class})`;
-  document.getElementById("student-id").textContent = sid;
-  document.getElementById("assigned-homework").textContent = db[currentStudent.class]?.homework || "No homework assigned.";
-  document.getElementById("student-code").value = db[currentStudent.class]?.submissions?.[sid] || "";
-  document.getElementById("code-output").textContent = "";
-  show("student-panel");
-}
-
-// Render all submissions for teacher
-function loadTeacherPanel() {
-  const out = document.getElementById("all-submissions");
-  out.innerHTML = "";
-
-  Object.entries(db).forEach(([className, classData]) => {
-    if (classData.submissions && Object.keys(classData.submissions).length > 0) {
-      const classDiv = document.createElement("div");
-      classDiv.innerHTML = `<h4>Class ${className}</h4>`;
-      Object.entries(classData.submissions).forEach(([studentId, code]) => {
-        const pre = document.createElement("pre");
-        pre.textContent = `${studentId}:\n${code}`;
-        classDiv.appendChild(pre);
-      });
-      out.appendChild(classDiv);
-    }
+function setupEditor() {
+  editor = ace.edit("editor-container");
+  editor.setTheme("ace/theme/textmate");
+  editor.session.setMode("ace/mode/python");
+  editor.setOptions({ enableBasicAutocompletion: true, showLineNumbers: true });
+  editor.session.on('change', () => {
+    localStorage.setItem("student-code", editor.getValue());
   });
-
-  show("teacher-panel");
+  const savedCode = localStorage.getItem("student-code");
+  if (savedCode) editor.setValue(savedCode, -1);
 }
 
-// Event: Student Login
-document.getElementById("student-login").onclick = () => {
-  const name = document.getElementById("student-name").value.trim();
-  const roll = document.getElementById("student-roll").value.trim();
-  const className = document.getElementById("student-class").value.trim();
-  if (!name || !roll || !className) return alert("Fill all student fields");
+function setupEvents() {
+  document.getElementById("student-login").onclick = () => {
+    const name = document.getElementById("student-name").value.trim();
+    const roll = document.getElementById("student-roll").value.trim();
+    const sclass = document.getElementById("student-class").value.trim();
+    if (name && roll && sclass) {
+      document.getElementById("student-id").textContent = `${name} (${roll})`;
+      document.getElementById("login-form").classList.add("hidden");
+      document.getElementById("student-panel").classList.remove("hidden");
+      loadHomework(sclass);
+    }
+  };
 
-  currentStudent = { name, roll, class: className };
-  if (!db[className]) db[className] = { homework: "", submissions: {} };
-  saveData();
-  loadStudentPanel();
-};
+  document.getElementById("teacher-login").onclick = () => {
+    const pass = document.getElementById("teacher-pass").value.trim();
+    if (pass === teacherPassword) {
+      document.getElementById("teacher-login-form").classList.add("hidden");
+      document.getElementById("teacher-panel").classList.remove("hidden");
+    } else {
+      alert("Incorrect password.");
+    }
+  };
 
-// Event: Show teacher login
-document.getElementById("show-teacher-login").onclick = () => show("teacher-login-form");
+  document.getElementById("run-code").onclick = async () => {
+    const code = editor.getValue();
+    try {
+      const result = await pyodide.runPythonAsync(code);
+      document.getElementById("code-output").textContent = result ?? "✅ No Output";
+    } catch (err) {
+      document.getElementById("code-output").textContent = `❌ Error: ${err}`;
+    }
+  };
 
-// Event: Teacher Login
-document.getElementById("teacher-login").onclick = () => {
-  const pwd = document.getElementById("teacher-pass").value;
-  if (pwd === TEACHER_PASSWORD) {
-    loadTeacherPanel();
-  } else {
-    alert("Incorrect password");
+  document.getElementById("submit-code").onclick = () => {
+    alert("Code submitted (local only)");
+  };
+
+  document.getElementById("set-homework").onclick = () => {
+    const cls = document.getElementById("target-class").value.trim();
+    const hw = document.getElementById("homework-text").value.trim();
+    if (cls && hw) {
+      localStorage.setItem("hw-" + cls.toLowerCase(), hw);
+      alert("Homework assigned to class " + cls);
+    }
+  };
+
+  document.querySelectorAll(".back-home").forEach(btn =>
+    btn.onclick = () => location.reload()
+  );
+
+  document.getElementById("show-teacher-login").onclick = () => {
+    document.getElementById("login-form").classList.add("hidden");
+    document.getElementById("teacher-login-form").classList.remove("hidden");
+  };
+
+  document.getElementById("show-student-login").onclick = () => {
+    document.getElementById("teacher-login-form").classList.add("hidden");
+    document.getElementById("login-form").classList.remove("hidden");
+  };
+
+  document.getElementById("theme-toggle").onclick = () => {
+    document.body.classList.toggle("dark");
+    editor.setTheme(document.body.classList.contains("dark") ? "ace/theme/monokai" : "ace/theme/textmate");
+    localStorage.setItem("theme", document.body.classList.contains("dark") ? "dark" : "light");
+  };
+}
+
+function restoreTheme() {
+  const saved = localStorage.getItem("theme");
+  if (saved === "dark") {
+    document.body.classList.add("dark");
+    editor?.setTheme("ace/theme/monokai");
   }
-};
+}
 
-// Event: Run Python Code
-document.getElementById("run-code").onclick = async () => {
-  const code = document.getElementById("student-code").value;
-  try {
-    const result = await pyodide.runPythonAsync(code);
-    document.getElementById("code-output").textContent = result;
-  } catch (err) {
-    document.getElementById("code-output").textContent = err;
-  }
-};
-
-// Event: Submit Code
-document.getElementById("submit-code").onclick = () => {
-  const code = document.getElementById("student-code").value;
-  const sid = `${currentStudent.name} (${currentStudent.roll}, ${currentStudent.class})`;
-  db[currentStudent.class].submissions[sid] = code;
-  saveData();
-  alert("Submitted!");
-};
-
-// Event: Set Homework
-document.getElementById("set-homework").onclick = () => {
-  const className = document.getElementById("target-class").value.trim();
-  const hwText = document.getElementById("homework-text").value.trim();
-  if (!className || !hwText) return alert("Fill both fields");
-  if (!db[className]) db[className] = { homework: "", submissions: {} };
-  db[className].homework = hwText;
-  saveData();
-  alert("Homework assigned");
-  loadTeacherPanel();
-};
-
-// Back Buttons
-document.getElementById("back-to-home1").onclick = () => show("login-form");
-document.getElementById("back-to-home2").onclick = () => show("login-form");
-document.getElementById("back-to-home3").onclick = () => show("login-form");
-
-// Initial load
-loadData();
-show("login-form");
+function loadHomework(cls) {
+  const hw = localStorage.getItem("hw-" + cls.toLowerCase()) || "No homework assigned.";
+  document.getElementById("assigned-homework").textContent = hw;
+}
