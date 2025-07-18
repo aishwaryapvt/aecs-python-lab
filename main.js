@@ -1,68 +1,74 @@
-let pyodide = null;
-let homeworkDB = {};
+import { loadHomework, assignHomework } from './homeworkManager.js';
 
-async function loadPyodideAndPackages() {
+let pyodide;
+let editor;
+
+async function initPyodide() {
   pyodide = await loadPyodide();
-  console.log("Pyodide loaded");
-}
-loadPyodideAndPackages();
-
-function showSection(idToShow) {
-  document.querySelectorAll(".section").forEach(el => {
-    el.classList.add("hidden");
-  });
-  document.getElementById(idToShow).classList.remove("hidden");
+  console.log('Pyodide loaded');
 }
 
-window.studentLogin = function () {
-  const name = document.getElementById("student-name").value.trim();
-  const cls = document.getElementById("student-class").value.trim();
-  const roll = document.getElementById("student-roll").value.trim();
+window.onload = async function () {
+  await initPyodide();
 
-  if (!name || !cls || !roll) return alert("Fill all fields");
+  editor = ace.edit("editor");
+  editor.setTheme("ace/theme/chrome");
+  editor.session.setMode("ace/mode/python");
 
-  const hw = homeworkDB[cls];
-  if (!hw) {
-    alert("No homework assigned to this class.");
+  document.getElementById('student-login-btn').onclick = () => login('student');
+  document.getElementById('teacher-login-btn').onclick = () => login('teacher');
+};
+
+function login(role) {
+  const name = document.getElementById('name').value.trim();
+  const roll = document.getElementById('roll').value.trim();
+  const cls = document.getElementById('class').value.trim();
+  const password = document.getElementById('password').value;
+
+  if (role === 'teacher') {
+    if (name !== 'teacher' || password !== 'admin') return alert('Invalid teacher credentials');
+    document.getElementById('login-page').classList.add('hidden');
+    document.getElementById('teacher-dashboard').classList.remove('hidden');
     return;
   }
 
-  document.getElementById("student-welcome").textContent = `Welcome, ${name} (${cls})`;
-  document.getElementById("student-homework").textContent = hw;
-  showSection("student-dashboard");
-};
-
-window.teacherLogin = function () {
-  const pass = document.getElementById("teacher-pass").value.trim();
-  if (pass === "admin123") {
-    showSection("teacher-dashboard");
-  } else {
-    alert("Incorrect password");
-  }
-};
-
-window.assignHomeworkToClass = function () {
-  const cls = document.getElementById("homework-class").value.trim();
-  const hw = document.getElementById("homework-text").value.trim();
-  if (!cls || !hw) return alert("Fill all fields");
-
-  homeworkDB[cls] = hw;
-  alert(`Homework assigned to class ${cls}`);
-  document.getElementById("homework-class").value = "";
-  document.getElementById("homework-text").value = "";
-};
+  if (!name || !roll || !cls) return alert('Fill all student fields');
+  document.getElementById('login-page').classList.add('hidden');
+  document.getElementById('student-dashboard').classList.remove('hidden');
+  document.getElementById('student-info').textContent = `Welcome, ${name} (${roll})`;
+  loadHomework(cls).then(hw => {
+    document.getElementById('homework-text-display').textContent = hw || 'No homework assigned';
+  });
+}
 
 window.runCode = async function () {
-  const code = document.getElementById("code-editor").value;
+  const code = editor.getValue();
   try {
     const result = await pyodide.runPythonAsync(code);
-    const captured = pyodide.globals.get("print").toJs()._output;
-    document.getElementById("output").textContent = captured || result || "✅ No Output";
+    document.getElementById('output').textContent = result !== undefined ? result.toString() : '✅ No Output';
   } catch (err) {
-    document.getElementById("output").textContent = "❌ " + err;
+    document.getElementById('output').textContent = '❌ ' + err;
   }
 };
 
 window.submitCode = function () {
-  alert("Code submitted!");
+  alert('Code submitted!');
+};
+
+window.assignHomeworkToClass = function () {
+  const cls = document.getElementById('homework-class').value.trim();
+  const hw = document.getElementById('homework-text').value.trim();
+  if (!cls || !hw) return alert('Fill all fields');
+  assignHomework(cls, hw);
+  alert('Homework assigned to Class ' + cls);
+};
+
+window.runTeacherCode = async function () {
+  const code = document.getElementById('teacher-code').value;
+  try {
+    const result = await pyodide.runPythonAsync(code);
+    document.getElementById('teacher-output').textContent = result !== undefined ? result.toString() : '✅ No Output';
+  } catch (err) {
+    document.getElementById('teacher-output').textContent = '❌ ' + err;
+  }
 };
