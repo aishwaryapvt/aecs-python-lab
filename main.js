@@ -32,14 +32,14 @@ function initializeData() {
             id: 2,
             title: "Simple Calculator",
             description: "Create a calculator that can add, subtract, multiply, and divide two numbers.",
-            starterCode: "# Simple Calculator\n# Get two numbers and an operator from user\n"
+            starterCode: "# Simple Calculator\n# Get two numbers and an operator from user\na = 10\nb = 5\nprint(f'Addition: {a + b}')\nprint(f'Subtraction: {a - b}')\nprint(f'Multiplication: {a * b}')\nprint(f'Division: {a / b}')"
         });
         
         questions['11A'].push({
             id: 3,
             title: "List Operations",
             description: "Write a program that performs various operations on a list of numbers.",
-            starterCode: "# List operations\nnumbers = [1, 2, 3, 4, 5]\n"
+            starterCode: "# List operations\nnumbers = [1, 2, 3, 4, 5]\nprint(f'Sum: {sum(numbers)}')\nprint(f'Max: {max(numbers)}')\nprint(f'Min: {min(numbers)}')"
         });
     }
 }
@@ -71,6 +71,9 @@ function studentLogin(event) {
         rollNo: rollNo
     };
     
+    // Store user info for persistence
+    localStorage.setItem('currentUser', JSON.stringify(currentUser));
+    
     // Redirect to student dashboard
     window.location.href = 'student.html';
 }
@@ -87,6 +90,9 @@ function teacherLogin(event) {
             type: 'teacher',
             username: username
         };
+        
+        // Store user info for persistence
+        localStorage.setItem('currentUser', JSON.stringify(currentUser));
         
         // Redirect to teacher dashboard
         window.location.href = 'teacher.html';
@@ -198,7 +204,7 @@ function viewSubmissions(questionId) {
                 <div class="submission-code">
                     <pre><code>${submission.code}</code></pre>
                 </div>
-                <button onclick="compileSubmission('${submission.code}')" class="compile-btn">Test Code</button>
+                <button onclick="compileSubmission('${encodeURIComponent(submission.code)}')" class="compile-btn">Test Code</button>
             `;
             submissionsList.appendChild(submissionDiv);
         });
@@ -211,19 +217,19 @@ function hideSubmissionsModal() {
     document.getElementById('submissions-modal').style.display = 'none';
 }
 
-function compileSubmission(code) {
-    // Simple compilation test using eval (in real app, use proper Python compiler)
-    try {
-        // This is a simplified version - in real app, you'd use a proper Python compiler
-        alert('Code compilation would be tested here. In a real application, this would execute the Python code safely.');
-    } catch (error) {
-        alert('Error in code: ' + error.message);
-    }
+function compileSubmission(encodedCode) {
+    const code = decodeURIComponent(encodedCode);
+    runPythonCode(code, 'Compilation test result:');
 }
 
 // Student dashboard functions
 function initializeStudentDashboard() {
-    // Get user info from storage or URL params
+    // Get user info from storage
+    const storedUser = localStorage.getItem('currentUser');
+    if (storedUser) {
+        currentUser = JSON.parse(storedUser);
+    }
+    
     const studentInfo = currentUser || {
         name: 'Student Name',
         class: '9A',
@@ -280,8 +286,8 @@ function selectQuestion(questionId) {
     }
 }
 
-function runCode() {
-    const code = document.getElementById('code-editor').value;
+// Fixed Python code execution function
+function runPythonCode(code, outputPrefix = '') {
     const output = document.getElementById('output');
     
     if (!code.trim()) {
@@ -290,13 +296,20 @@ function runCode() {
     }
     
     // Clear previous output
-    output.innerHTML = '';
+    output.innerHTML = outputPrefix ? `<strong>${outputPrefix}</strong><br>` : '';
+    
+    // Check if Skulpt is available
+    if (typeof Sk === 'undefined') {
+        // Fallback: simulate Python execution for common cases
+        simulatePythonExecution(code, output);
+        return;
+    }
     
     // Configure Skulpt
     Sk.pre = "output";
     Sk.configure({
         output: function(text) {
-            output.innerHTML += text;
+            output.innerHTML += text.replace(/\n/g, '<br>');
         },
         read: function(x) {
             if (Sk.builtinFiles === undefined || Sk.builtinFiles["files"][x] === undefined)
@@ -312,13 +325,75 @@ function runCode() {
         });
         
         prog.then(function(mod) {
-            // Success
+            // Success - output already handled by Skulpt
         }, function(err) {
-            output.innerHTML = '<span class="error">Error: ' + err.toString() + '</span>';
+            output.innerHTML += '<br><span class="error">Error: ' + err.toString() + '</span>';
         });
     } catch (e) {
-        output.innerHTML = '<span class="error">Error: ' + e.toString() + '</span>';
+        output.innerHTML += '<br><span class="error">Error: ' + e.toString() + '</span>';
     }
+}
+
+// Fallback simulation for basic Python code
+function simulatePythonExecution(code, outputElement) {
+    try {
+        // Simple simulation for basic Python constructs
+        let simulatedOutput = '';
+        
+        // Handle print statements
+        const printRegex = /print\s*\(\s*([^)]+)\s*\)/g;
+        let match;
+        
+        while ((match = printRegex.exec(code)) !== null) {
+            let printContent = match[1];
+            
+            // Handle f-strings
+            if (printContent.includes('f\'') || printContent.includes('f"')) {
+                printContent = printContent.replace(/f['"]([^'"]*)['"]/g, function(match, content) {
+                    // Simple f-string simulation
+                    return content.replace(/\{([^}]+)\}/g, function(match, expr) {
+                        // Very basic expression evaluation
+                        if (expr.includes('+')) {
+                            const parts = expr.split('+').map(p => p.trim());
+                            if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
+                                return (parseFloat(parts[0]) + parseFloat(parts[1])).toString();
+                            }
+                        }
+                        return expr; // Return as-is if can't evaluate
+                    });
+                });
+            }
+            
+            // Remove quotes
+            printContent = printContent.replace(/^['"]|['"]$/g, '');
+            
+            simulatedOutput += printContent + '<br>';
+        }
+        
+        // Handle simple variable assignments and calculations
+        if (code.includes('sum(') && code.includes('[')) {
+            const listMatch = code.match(/\[([^\]]+)\]/);
+            if (listMatch) {
+                const numbers = listMatch[1].split(',').map(n => parseFloat(n.trim()));
+                const sum = numbers.reduce((a, b) => a + b, 0);
+                simulatedOutput = simulatedOutput.replace(/\{sum\([^}]+\)\}/g, sum.toString());
+            }
+        }
+        
+        if (simulatedOutput) {
+            outputElement.innerHTML += simulatedOutput;
+        } else {
+            outputElement.innerHTML += '<span class="info">Code executed successfully (simulation mode)</span>';
+        }
+        
+    } catch (error) {
+        outputElement.innerHTML += '<span class="error">Simulation Error: ' + error.message + '</span>';
+    }
+}
+
+function runCode() {
+    const code = document.getElementById('code-editor').value;
+    runPythonCode(code);
 }
 
 function submitCode() {
@@ -357,6 +432,7 @@ function logout() {
     currentUser = null;
     currentClass = null;
     currentQuestion = null;
+    localStorage.removeItem('currentUser');
     window.location.href = 'index.html';
 }
 
