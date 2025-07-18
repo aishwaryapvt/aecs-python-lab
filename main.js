@@ -1,82 +1,72 @@
 // main.js
 
-let pyodideReadyPromise = loadPyodideAndPackages();
+let pyodide;
 
 async function loadPyodideAndPackages() {
-  let pyodide = await loadPyodide();
-  await pyodide.loadPackage("micropip");
-  return pyodide;
+  pyodide = await loadPyodide();
+  console.log("Pyodide loaded");
 }
 
-function showElement(id) {
-  document.querySelectorAll(".screen").forEach(div => div.style.display = "none");
-  document.getElementById(id).style.display = "block";
-}
+loadPyodideAndPackages();
 
-// Student login
-document.getElementById("student-btn").addEventListener("click", () => {
-  showElement("student-login");
-});
+document.addEventListener("DOMContentLoaded", () => {
+  const loginScreen = document.getElementById("login-screen");
+  const studentLogin = document.getElementById("student-login");
+  const studentDashboard = document.getElementById("student-dashboard");
+  const teacherDashboard = document.getElementById("teacher-dashboard");
 
-document.getElementById("student-login-btn").addEventListener("click", () => {
-  const name = document.getElementById("name").value;
-  const roll = document.getElementById("roll").value;
-  const studentClass = document.getElementById("class").value;
+  document.getElementById("student-login-btn").addEventListener("click", () => {
+    loginScreen.style.display = "none";
+    studentLogin.style.display = "block";
+  });
 
-  if (!name || !roll || !studentClass) {
-    alert("Please fill in all fields.");
-    return;
-  }
+  document.getElementById("teacher-login-btn").addEventListener("click", () => {
+    window.location.href = "teacher.html";
+  });
 
-  document.getElementById("student-dashboard").style.display = "block";
-  document.getElementById("student-login").style.display = "none";
-  document.getElementById("student-name").textContent = name;
-});
+  document.getElementById("student-submit-btn").addEventListener("click", () => {
+    const name = document.getElementById("student-name").value;
+    const studentClass = document.getElementById("student-class").value;
+    const roll = document.getElementById("student-roll").value;
 
-// Go back from student dashboard
-document.getElementById("student-back-btn").addEventListener("click", () => {
-  showElement("login-screen");
-  document.getElementById("code").value = "";
-  document.getElementById("output").textContent = "";
-});
+    if (name && studentClass && roll) {
+      document.getElementById("student-name-display").textContent = name;
+      loginScreen.style.display = "none";
+      studentLogin.style.display = "none";
+      studentDashboard.style.display = "block";
+    } else {
+      alert("Please fill in all student details.");
+    }
+  });
 
-// Teacher login redirect
-document.getElementById("teacher-btn").addEventListener("click", () => {
-  window.location.href = "teacher.html";
-});
+  document.getElementById("back-btn").addEventListener("click", () => {
+    studentDashboard.style.display = "none";
+    loginScreen.style.display = "block";
+  });
 
-// Run Python code
-document.getElementById("run-code").addEventListener("click", async () => {
-  const code = document.getElementById("code").value;
+  document.getElementById("run-code").addEventListener("click", async () => {
+    const code = document.getElementById("code-input").value;
+    const outputElem = document.getElementById("output");
 
-  if (!code.trim()) {
-    alert("Please enter Python code.");
-    return;
-  }
+    try {
+      let output = await pyodide.runPythonAsync(`
+import sys
+from io import StringIO
 
-  const outputEl = document.getElementById("output");
-  outputEl.textContent = "⏳ Running...";
+stdout = sys.stdout
+stderr = sys.stderr
+sys.stdout = sys.stderr = StringIO()
 
-  try {
-    let pyodide = await pyodideReadyPromise;
+try:
+${code.split('\n').map(line => '  ' + line).join('\n')}
+except Exception as e:
+  print(e)
 
-    let output = await pyodide.runPythonAsync(`
-      import sys
-      from io import StringIO
-
-      sys.stdout = StringIO()
-      sys.stderr = StringIO()
-
-      try:
-          exec("""${code}""")
-      except Exception as e:
-          print("Error:", e)
-
-      sys.stdout.getvalue() + sys.stderr.getvalue()
-    `);
-
-    outputEl.textContent = output;
-  } catch (err) {
-    outputEl.textContent = `❌ Unexpected Error:\n${err}`;
-  }
+sys.stdout.getvalue()
+      `);
+      outputElem.textContent = output;
+    } catch (err) {
+      outputElem.textContent = `❌ Error:\n${err}`;
+    }
+  });
 });

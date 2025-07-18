@@ -3,44 +3,59 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Homework Submission Portal</title>
-  <link rel="stylesheet" href="style.css" />
+  <title>Homework Submission</title>
+  <link rel="stylesheet" href="style.css"/>
 </head>
 <body>
   <header>
-    <h1>Homework Submission Portal</h1>
+    <h1>Atomic Energy Central School No. 3, Tarapur</h1>
+    <h2>Python Homework Coding Platform</h2>
   </header>
 
-  <div id="student-login">
-    <h2>Student Login</h2>
-    <input type="text" id="student-name" placeholder="Name" />
-    <input type="text" id="student-class" placeholder="Class" />
-    <input type="text" id="student-roll" placeholder="Roll Number" />
-    <button onclick="loginStudent()">Login</button>
-    <button onclick="location.href='teacher.html'">Teacher Login</button>
+  <!-- Login screen -->
+  <div id="login-screen" class="visible container">
+    <h2>Login</h2>
+    <button onclick="showStudentLogin()">Student Login</button>
+    <button onclick="window.location.href='teacher.html'">Teacher Login</button>
   </div>
 
-  <div id="student-dashboard" class="container hidden">
-    <h2>Welcome, <span id="student-id"></span></h2>
-    <button onclick="backToLogin()">⬅ Back</button>
+  <!-- Student login form -->
+  <div id="student-login" class="hidden container">
+    <h2>Student Login</h2>
+    <input type="text" id="name" placeholder="Name" required />
+    <input type="text" id="class" placeholder="Class" required />
+    <input type="text" id="roll" placeholder="Roll Number" required />
+    <button onclick="loginStudent()">Login</button>
+    <button onclick="goBackToLogin()">Back</button>
+  </div>
 
-    <div>
+  <!-- Student dashboard -->
+  <div id="student-dashboard" class="hidden container">
+    <h2>Welcome, <span id="student-name"></span>!</h2>
+    <h3>Class: <span id="student-class"></span> | Roll: <span id="student-roll"></span></h3>
+
+    <div id="homework-section">
       <h3>Assigned Homework</h3>
-      <ul id="assigned-homework"></ul>
+      <pre id="assigned-homework">No homework assigned yet.</pre>
     </div>
 
-    <div>
-      <h3>Submit Your Code</h3>
+    <div id="code-section">
+      <h3>Submit Your Python Code</h3>
       <textarea id="student-code" placeholder="Write your Python code here..."></textarea>
-      <button onclick="runStudentCode()">Run Code</button>
+      <button onclick="runCode()">Run Code</button>
+      <h3>Output</h3>
       <pre id="output"></pre>
     </div>
+
+    <button onclick="logoutStudent()">Logout</button>
+    <button onclick="goBackToLogin()">Back</button>
   </div>
 
   <footer>
-    <p>&copy; 2025 Homework Portal</p>
+    <p>Made By : Mrs. Sona O.K., PGT Computer Science  </p>
   </footer>
 
+  <script src="https://cdn.jsdelivr.net/pyodide/v0.24.1/full/pyodide.js"></script>
   <script src="main.js"></script>
 </body>
 </html>
