@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Dashboard - Python Homework Compiler</title>
+    <link rel="stylesheet" href="src/index.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>Python Homework Compiler</h1>
+            <div class="nav-bar">
+                <span id="student-info">Student Dashboard</span>
+                <button onclick="logout()" class="logout-btn">Logout</button>
+            </div>
+        </header>
+        
+        <main class="main-content">
+            <div class="student-dashboard">
+                <div class="questions-panel">
+                    <h3>Assigned Questions</h3>
+                    <div id="assigned-questions" class="questions-list">
+                        <!-- Questions will be populated here -->
+                    </div>
+                </div>
+                
+                <div class="code-panel">
+                    <div class="code-header">
+                        <h3 id="current-question-title">Select a question to start coding</h3>
+                    </div>
+                    
+                    <div id="question-description" class="question-description">
+                        <!-- Question description will appear here -->
+                    </div>
+                    
+                    <div class="code-editor-container">
+                        <textarea id="code-editor" class="code-editor" placeholder="Write your Python code here..."></textarea>
+                    </div>
+                    
+                    <div class="code-actions">
+                        <button id="run-btn" onclick="runCode()" class="run-btn" disabled>Run Code</button>
+                        <button id="submit-btn" onclick="submitCode()" class="submit-btn" disabled>Submit Code</button>
+                    </div>
+                    
+                    <div id="output-container" class="output-container">
+                        <h4>Output:</h4>
+                        <div id="output" class="output"></div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/skulpt/0.11.1/skulpt.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/skulpt/0.11.1/skulpt-stdlib.js"></script>
+    <script src="src/main.js"></script>
+</body>
+</html>

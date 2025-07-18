@@ -1,74 +1,371 @@
-// main.js
-let pyodideReadyPromise;
-let pyodide;
-let editor;
+// Global variables
+let currentUser = null;
+let currentClass = null;
+let currentQuestion = null;
+let questions = {};
+let submissions = {};
 
-async function loadPyodideAndPackages() {
-  pyodideReadyPromise = loadPyodide();
-  await pyodideReadyPromise;
+// Initialize data structure
+function initializeData() {
+    const classes = ['9A', '9B', '10A', '10B', '11A', '11B', '12A', '12B'];
+    
+    // Initialize questions for each class
+    classes.forEach(cls => {
+        if (!questions[cls]) {
+            questions[cls] = [];
+        }
+        if (!submissions[cls]) {
+            submissions[cls] = {};
+        }
+    });
+    
+    // Add sample questions
+    if (questions['9A'].length === 0) {
+        questions['9A'].push({
+            id: 1,
+            title: "Hello World",
+            description: "Write a Python program that prints 'Hello, World!' to the console.",
+            starterCode: "# Write your code here\nprint('Hello, World!')"
+        });
+        
+        questions['10A'].push({
+            id: 2,
+            title: "Simple Calculator",
+            description: "Create a calculator that can add, subtract, multiply, and divide two numbers.",
+            starterCode: "# Simple Calculator\n# Get two numbers and an operator from user\n"
+        });
+        
+        questions['11A'].push({
+            id: 3,
+            title: "List Operations",
+            description: "Write a program that performs various operations on a list of numbers.",
+            starterCode: "# List operations\nnumbers = [1, 2, 3, 4, 5]\n"
+        });
+    }
 }
 
-loadPyodideAndPackages();
+// Login page functions
+function showTab(tabName) {
+    document.querySelectorAll('.tab-content').forEach(tab => {
+        tab.classList.remove('active');
+    });
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    
+    document.getElementById(tabName + '-tab').classList.add('active');
+    event.target.classList.add('active');
+}
 
-document.addEventListener("DOMContentLoaded", () => {
-  const loginScreen = document.getElementById("login-screen");
-  const studentLogin = document.getElementById("student-login");
-  const studentDashboard = document.getElementById("student-dashboard");
-  const teacherButton = document.getElementById("teacher-login-btn");
-  const studentButton = document.getElementById("student-login-btn");
-  const studentSubmitBtn = document.getElementById("student-submit-btn");
-  const backToLoginBtn = document.getElementById("back-to-login");
+function studentLogin(event) {
+    event.preventDefault();
+    
+    const name = document.getElementById('student-name').value;
+    const studentClass = document.getElementById('student-class').value;
+    const rollNo = document.getElementById('student-roll').value;
+    
+    currentUser = {
+        type: 'student',
+        name: name,
+        class: studentClass,
+        rollNo: rollNo
+    };
+    
+    // Redirect to student dashboard
+    window.location.href = 'student.html';
+}
 
-  // Navigate to teacher.html
-  teacherButton.addEventListener("click", () => {
-    window.location.href = "teacher.html";
-  });
-
-  // Show student login form
-  studentButton.addEventListener("click", () => {
-    loginScreen.style.display = "none";
-    studentLogin.style.display = "block";
-  });
-
-  // Student login submission
-  document.getElementById("student-login-form").addEventListener("submit", (e) => {
-    e.preventDefault();
-    const name = document.getElementById("student-name").value.trim();
-    const studentClass = document.getElementById("student-class").value.trim();
-    const roll = document.getElementById("student-roll").value.trim();
-    if (name && studentClass && roll) {
-      studentLogin.style.display = "none";
-      studentDashboard.style.display = "block";
-      document.getElementById("student-id-display").textContent = `${name} | Class ${studentClass} | Roll ${roll}`;
+function teacherLogin(event) {
+    event.preventDefault();
+    
+    const username = document.getElementById('teacher-username').value;
+    const password = document.getElementById('teacher-password').value;
+    
+    // Simple authentication (in real app, this would be server-side)
+    if (username === 'teacher' && password === 'password') {
+        currentUser = {
+            type: 'teacher',
+            username: username
+        };
+        
+        // Redirect to teacher dashboard
+        window.location.href = 'teacher.html';
+    } else {
+        alert('Invalid credentials. Use username: teacher, password: password');
     }
-  });
+}
 
-  // Go back to main login screen
-  backToLoginBtn.addEventListener("click", () => {
-    studentDashboard.style.display = "none";
-    loginScreen.style.display = "block";
-    document.getElementById("student-code").value = "";
-    document.getElementById("output").textContent = "";
-  });
+// Teacher dashboard functions
+function selectClass(className) {
+    currentClass = className;
+    document.getElementById('selected-class').textContent = `Class: ${className}`;
+    document.getElementById('add-question-btn').style.display = 'block';
+    
+    // Highlight selected class
+    document.querySelectorAll('.class-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    event.target.classList.add('active');
+    
+    displayQuestions();
+}
 
-  // Run Python code using Pyodide
-  studentSubmitBtn.addEventListener("click", async () => {
-    const code = document.getElementById("student-code").value;
-    const outputElement = document.getElementById("output");
+function displayQuestions() {
+    const container = document.getElementById('questions-container');
+    const classQuestions = questions[currentClass] || [];
+    
+    container.innerHTML = '';
+    
+    if (classQuestions.length === 0) {
+        container.innerHTML = '<p class="no-questions">No questions assigned to this class yet.</p>';
+        return;
+    }
+    
+    classQuestions.forEach(question => {
+        const questionDiv = document.createElement('div');
+        questionDiv.className = 'question-item';
+        questionDiv.innerHTML = `
+            <div class="question-header">
+                <h4>${question.title}</h4>
+                <div class="question-actions">
+                    <button onclick="viewSubmissions(${question.id})" class="view-btn">View Submissions</button>
+                    <button onclick="removeQuestion(${question.id})" class="remove-btn">Remove</button>
+                </div>
+            </div>
+            <p class="question-desc">${question.description}</p>
+        `;
+        container.appendChild(questionDiv);
+    });
+}
+
+function showAddQuestionForm() {
+    document.getElementById('add-question-form').style.display = 'flex';
+}
+
+function hideAddQuestionForm() {
+    document.getElementById('add-question-form').style.display = 'none';
+    document.getElementById('question-title').value = '';
+    document.getElementById('question-description').value = '';
+    document.getElementById('question-starter').value = '';
+}
+
+function addQuestion(event) {
+    event.preventDefault();
+    
+    const title = document.getElementById('question-title').value;
+    const description = document.getElementById('question-description').value;
+    const starterCode = document.getElementById('question-starter').value;
+    
+    const newQuestion = {
+        id: Date.now(),
+        title: title,
+        description: description,
+        starterCode: starterCode
+    };
+    
+    questions[currentClass].push(newQuestion);
+    hideAddQuestionForm();
+    displayQuestions();
+}
+
+function removeQuestion(questionId) {
+    if (confirm('Are you sure you want to remove this question?')) {
+        questions[currentClass] = questions[currentClass].filter(q => q.id !== questionId);
+        displayQuestions();
+    }
+}
+
+function viewSubmissions(questionId) {
+    const question = questions[currentClass].find(q => q.id === questionId);
+    const questionSubmissions = submissions[currentClass][questionId] || [];
+    
+    document.getElementById('submissions-title').textContent = `Submissions for: ${question.title}`;
+    
+    const submissionsList = document.getElementById('submissions-list');
+    submissionsList.innerHTML = '';
+    
+    if (questionSubmissions.length === 0) {
+        submissionsList.innerHTML = '<p>No submissions yet.</p>';
+    } else {
+        questionSubmissions.forEach(submission => {
+            const submissionDiv = document.createElement('div');
+            submissionDiv.className = 'submission-item';
+            submissionDiv.innerHTML = `
+                <div class="submission-header">
+                    <h4>${submission.studentName} (Roll: ${submission.rollNo})</h4>
+                    <span class="submission-time">${new Date(submission.timestamp).toLocaleString()}</span>
+                </div>
+                <div class="submission-code">
+                    <pre><code>${submission.code}</code></pre>
+                </div>
+                <button onclick="compileSubmission('${submission.code}')" class="compile-btn">Test Code</button>
+            `;
+            submissionsList.appendChild(submissionDiv);
+        });
+    }
+    
+    document.getElementById('submissions-modal').style.display = 'flex';
+}
+
+function hideSubmissionsModal() {
+    document.getElementById('submissions-modal').style.display = 'none';
+}
+
+function compileSubmission(code) {
+    // Simple compilation test using eval (in real app, use proper Python compiler)
     try {
-      await pyodideReadyPromise;
-      let result = await pyodide.runPythonAsync(`
-import sys
-from io import StringIO
-sys.stdout = sys.stderr = mystdout = StringIO()
-
-${code}
-
-mystdout.getvalue()
-      `);
-      outputElement.textContent = result;
-    } catch (err) {
-      outputElement.textContent = "❌ Error:\n" + err;
+        // This is a simplified version - in real app, you'd use a proper Python compiler
+        alert('Code compilation would be tested here. In a real application, this would execute the Python code safely.');
+    } catch (error) {
+        alert('Error in code: ' + error.message);
     }
-  });
+}
+
+// Student dashboard functions
+function initializeStudentDashboard() {
+    // Get user info from storage or URL params
+    const studentInfo = currentUser || {
+        name: 'Student Name',
+        class: '9A',
+        rollNo: '1'
+    };
+    
+    document.getElementById('student-info').textContent = 
+        `${studentInfo.name} - Class: ${studentInfo.class}, Roll: ${studentInfo.rollNo}`;
+    
+    loadAssignedQuestions(studentInfo.class);
+}
+
+function loadAssignedQuestions(studentClass) {
+    const assignedQuestions = questions[studentClass] || [];
+    const container = document.getElementById('assigned-questions');
+    
+    container.innerHTML = '';
+    
+    if (assignedQuestions.length === 0) {
+        container.innerHTML = '<p class="no-questions">No questions assigned yet.</p>';
+        return;
+    }
+    
+    assignedQuestions.forEach(question => {
+        const questionDiv = document.createElement('div');
+        questionDiv.className = 'question-item';
+        questionDiv.innerHTML = `
+            <h4>${question.title}</h4>
+            <button onclick="selectQuestion(${question.id})" class="select-btn">Select</button>
+        `;
+        container.appendChild(questionDiv);
+    });
+}
+
+function selectQuestion(questionId) {
+    const studentClass = currentUser?.class || '9A';
+    currentQuestion = questions[studentClass].find(q => q.id === questionId);
+    
+    if (currentQuestion) {
+        document.getElementById('current-question-title').textContent = currentQuestion.title;
+        document.getElementById('question-description').innerHTML = 
+            `<p>${currentQuestion.description}</p>`;
+        document.getElementById('code-editor').value = currentQuestion.starterCode || '';
+        
+        // Enable buttons
+        document.getElementById('run-btn').disabled = false;
+        document.getElementById('submit-btn').disabled = false;
+        
+        // Highlight selected question
+        document.querySelectorAll('.question-item .select-btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        event.target.classList.add('active');
+    }
+}
+
+function runCode() {
+    const code = document.getElementById('code-editor').value;
+    const output = document.getElementById('output');
+    
+    if (!code.trim()) {
+        output.innerHTML = '<span class="error">Please write some code first.</span>';
+        return;
+    }
+    
+    // Clear previous output
+    output.innerHTML = '';
+    
+    // Configure Skulpt
+    Sk.pre = "output";
+    Sk.configure({
+        output: function(text) {
+            output.innerHTML += text;
+        },
+        read: function(x) {
+            if (Sk.builtinFiles === undefined || Sk.builtinFiles["files"][x] === undefined)
+                throw "File not found: '" + x + "'";
+            return Sk.builtinFiles["files"][x];
+        }
+    });
+    
+    // Run the code
+    try {
+        const prog = Sk.misceval.asyncToPromise(function() {
+            return Sk.importMainWithBody("<stdin>", false, code, true);
+        });
+        
+        prog.then(function(mod) {
+            // Success
+        }, function(err) {
+            output.innerHTML = '<span class="error">Error: ' + err.toString() + '</span>';
+        });
+    } catch (e) {
+        output.innerHTML = '<span class="error">Error: ' + e.toString() + '</span>';
+    }
+}
+
+function submitCode() {
+    const code = document.getElementById('code-editor').value;
+    
+    if (!code.trim()) {
+        alert('Please write some code before submitting.');
+        return;
+    }
+    
+    if (!currentQuestion) {
+        alert('Please select a question first.');
+        return;
+    }
+    
+    const studentClass = currentUser?.class || '9A';
+    const submission = {
+        questionId: currentQuestion.id,
+        studentName: currentUser?.name || 'Student',
+        rollNo: currentUser?.rollNo || '1',
+        code: code,
+        timestamp: Date.now()
+    };
+    
+    // Initialize submissions structure if needed
+    if (!submissions[studentClass][currentQuestion.id]) {
+        submissions[studentClass][currentQuestion.id] = [];
+    }
+    
+    submissions[studentClass][currentQuestion.id].push(submission);
+    
+    alert('Code submitted successfully!');
+}
+
+function logout() {
+    currentUser = null;
+    currentClass = null;
+    currentQuestion = null;
+    window.location.href = 'index.html';
+}
+
+// Initialize the application
+document.addEventListener('DOMContentLoaded', function() {
+    initializeData();
+    
+    // Check which page we're on and initialize accordingly
+    if (window.location.pathname.includes('student.html')) {
+        initializeStudentDashboard();
+    }
 });

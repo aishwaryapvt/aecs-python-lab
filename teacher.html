@@ -1,51 +1,84 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Teacher Dashboard</title>
-  <link rel="stylesheet" href="style.css" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teacher Dashboard - Python Homework Compiler</title>
+    <link rel="stylesheet" href="src/index.css">
 </head>
 <body>
-  <header>
-    <h1>Atomic Energy Central School No. 3, Tarapur</h1>
-    <h2>Python Homework Coding Platform</h2>
-  </header>
-
-  <main>
-    <section id="teacher-dashboard">
-      <h3>Assign Homework</h3>
-      <form id="homework-form">
-        <label for="homework-class">Class:</label><br>
-        <input type="text" id="homework-class" required><br><br>
-
-        <label for="homework-content">Python Homework:</label><br>
-        <textarea id="homework-content" rows="8" required></textarea><br>
-
-        <button type="submit">Assign Homework</button>
-      </form>
-
-      <p id="status-message"></p>
-    </section>
-
-    <button onclick="window.location.href='index.html'">🔙 Back to Login</button>
-  </main>
-
-  <footer>
-    <p>Made By : Mrs. Sona O.K., PGT Computer Science  </p>
-  </footer>
-
-  <script>
-    document.getElementById("homework-form").addEventListener("submit", function(e) {
-      e.preventDefault();
-      const cls = document.getElementById("homework-class").value.trim();
-      const hw = document.getElementById("homework-content").value.trim();
-      if (cls && hw) {
-        localStorage.setItem(`homework-class-${cls}`, hw);
-        document.getElementById("status-message").textContent = `✅ Homework assigned to Class ${cls}`;
-        document.getElementById("homework-form").reset();
-      }
-    });
-  </script>
+    <div class="container">
+        <header class="header">
+            <h1>Python Homework Compiler</h1>
+            <div class="nav-bar">
+                <span>Teacher Dashboard</span>
+                <button onclick="logout()" class="logout-btn">Logout</button>
+            </div>
+        </header>
+        
+        <main class="main-content">
+            <div class="dashboard-container">
+                <div class="sidebar">
+                    <h3>Classes</h3>
+                    <div class="class-list">
+                        <button class="class-btn" onclick="selectClass('9A')">9A</button>
+                        <button class="class-btn" onclick="selectClass('9B')">9B</button>
+                        <button class="class-btn" onclick="selectClass('10A')">10A</button>
+                        <button class="class-btn" onclick="selectClass('10B')">10B</button>
+                        <button class="class-btn" onclick="selectClass('11A')">11A</button>
+                        <button class="class-btn" onclick="selectClass('11B')">11B</button>
+                        <button class="class-btn" onclick="selectClass('12A')">12A</button>
+                        <button class="class-btn" onclick="selectClass('12B')">12B</button>
+                    </div>
+                </div>
+                
+                <div class="content-area">
+                    <div class="class-header">
+                        <h2 id="selected-class">Select a class to view questions</h2>
+                        <button id="add-question-btn" onclick="showAddQuestionForm()" class="add-btn" style="display: none;">Add Question</button>
+                    </div>
+                    
+                    <div id="questions-container" class="questions-container">
+                        <!-- Questions will be populated here -->
+                    </div>
+                    
+                    <div id="add-question-form" class="modal" style="display: none;">
+                        <div class="modal-content">
+                            <h3>Add New Question</h3>
+                            <form onsubmit="addQuestion(event)">
+                                <div class="input-group">
+                                    <label for="question-title">Question Title:</label>
+                                    <input type="text" id="question-title" required>
+                                </div>
+                                <div class="input-group">
+                                    <label for="question-description">Question Description:</label>
+                                    <textarea id="question-description" rows="4" required></textarea>
+                                </div>
+                                <div class="input-group">
+                                    <label for="question-starter">Starter Code (Optional):</label>
+                                    <textarea id="question-starter" rows="3"></textarea>
+                                </div>
+                                <div class="form-actions">
+                                    <button type="submit" class="save-btn">Save Question</button>
+                                    <button type="button" onclick="hideAddQuestionForm()" class="cancel-btn">Cancel</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                    
+                    <div id="submissions-modal" class="modal" style="display: none;">
+                        <div class="modal-content">
+                            <h3 id="submissions-title">Student Submissions</h3>
+                            <div id="submissions-list"></div>
+                            <button onclick="hideSubmissionsModal()" class="close-btn">Close</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <script src="src/teacherManager.js"></script>
+    <script src="src/main.js"></script>
 </body>
 </html>
