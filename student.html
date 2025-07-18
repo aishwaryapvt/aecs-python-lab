@@ -3,55 +3,60 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Student Dashboard - Python Homework Compiler</title>
-    <link rel="stylesheet" href="src/index.css">
+    <title>Student Dashboard - Python Online Judge</title>
+    <link rel="stylesheet" href="src/assets/styles.css">
 </head>
 <body>
     <div class="container">
-        <header class="header">
-            <h1>Python Homework Compiler</h1>
-            <div class="nav-bar">
-                <span id="student-info">Student Dashboard</span>
+        <div class="header">
+            <h1>Student Dashboard</h1>
+            <div class="user-info">
+                <span id="student-info">Student Info</span>
                 <button onclick="logout()" class="logout-btn">Logout</button>
             </div>
-        </header>
-        
-        <main class="main-content">
-            <div class="student-dashboard">
-                <div class="questions-panel">
+        </div>
+
+        <div class="student-dashboard">
+            <!-- Left Panel: Questions -->
+            <div class="left-panel">
+                <div class="questions-section">
                     <h3>Assigned Questions</h3>
-                    <div id="assigned-questions" class="questions-list">
+                    <div id="assigned-questions">
                         <!-- Questions will be populated here -->
                     </div>
                 </div>
-                
-                <div class="code-panel">
-                    <div class="code-header">
-                        <h3 id="current-question-title">Select a question to start coding</h3>
+            </div>
+
+            <!-- Right Panel: Code Editor -->
+            <div class="right-panel">
+                <div class="question-details">
+                    <h3 id="current-question-title">Select a question to start coding</h3>
+                    <div id="question-description">
+                        <p>Choose a question from the left panel to see its description and start coding.</p>
                     </div>
-                    
-                    <div id="question-description" class="question-description">
-                        <!-- Question description will appear here -->
-                    </div>
-                    
-                    <div class="code-editor-container">
-                        <textarea id="code-editor" class="code-editor" placeholder="Write your Python code here..."></textarea>
-                    </div>
+                </div>
+
+                <div class="code-section">
+                    <h4>Code Editor</h4>
+                    <textarea id="code-editor" placeholder="Write your Python code here..." rows="15"></textarea>
                     
                     <div class="code-actions">
-                        <button id="run-btn" onclick="runCode()" class="run-btn" disabled>Run Code</button>
-                        <button id="submit-btn" onclick="submitCode()" class="submit-btn" disabled>Submit Code</button>
+                        <button id="run-btn" onclick="runCode()" disabled>Run Code</button>
+                        <button id="submit-btn" onclick="submitCode()" disabled>Submit Code</button>
                     </div>
-                    
-                    <div id="output-container" class="output-container">
-                        <h4>Output:</h4>
-                        <div id="output" class="output"></div>
+                </div>
+
+                <div class="output-section">
+                    <h4>Output</h4>
+                    <div id="output" class="output-box">
+                        Output will appear here when you run your code.
                     </div>
                 </div>
             </div>
-        </main>
+        </div>
     </div>
-    
+
+    <!-- Scripts -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/skulpt/0.11.1/skulpt.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/skulpt/0.11.1/skulpt-stdlib.js"></script>
     <script src="src/main.js"></script>

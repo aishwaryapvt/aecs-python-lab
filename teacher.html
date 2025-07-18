@@ -3,82 +3,92 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Teacher Dashboard - Python Homework Compiler</title>
-    <link rel="stylesheet" href="src/index.css">
+    <title>Teacher Dashboard - Python Online Judge</title>
+    <link rel="stylesheet" href="src/assets/styles.css">
 </head>
 <body>
     <div class="container">
-        <header class="header">
-            <h1>Python Homework Compiler</h1>
-            <div class="nav-bar">
-                <span>Teacher Dashboard</span>
-                <button onclick="logout()" class="logout-btn">Logout</button>
-            </div>
-        </header>
-        
-        <main class="main-content">
-            <div class="dashboard-container">
-                <div class="sidebar">
-                    <h3>Classes</h3>
-                    <div class="class-list">
-                        <button class="class-btn" onclick="selectClass('9A')">9A</button>
-                        <button class="class-btn" onclick="selectClass('9B')">9B</button>
-                        <button class="class-btn" onclick="selectClass('10A')">10A</button>
-                        <button class="class-btn" onclick="selectClass('10B')">10B</button>
-                        <button class="class-btn" onclick="selectClass('11A')">11A</button>
-                        <button class="class-btn" onclick="selectClass('11B')">11B</button>
-                        <button class="class-btn" onclick="selectClass('12A')">12A</button>
-                        <button class="class-btn" onclick="selectClass('12B')">12B</button>
-                    </div>
-                </div>
-                
-                <div class="content-area">
-                    <div class="class-header">
-                        <h2 id="selected-class">Select a class to view questions</h2>
-                        <button id="add-question-btn" onclick="showAddQuestionForm()" class="add-btn" style="display: none;">Add Question</button>
-                    </div>
-                    
-                    <div id="questions-container" class="questions-container">
-                        <!-- Questions will be populated here -->
-                    </div>
-                    
-                    <div id="add-question-form" class="modal" style="display: none;">
-                        <div class="modal-content">
-                            <h3>Add New Question</h3>
-                            <form onsubmit="addQuestion(event)">
-                                <div class="input-group">
-                                    <label for="question-title">Question Title:</label>
-                                    <input type="text" id="question-title" required>
-                                </div>
-                                <div class="input-group">
-                                    <label for="question-description">Question Description:</label>
-                                    <textarea id="question-description" rows="4" required></textarea>
-                                </div>
-                                <div class="input-group">
-                                    <label for="question-starter">Starter Code (Optional):</label>
-                                    <textarea id="question-starter" rows="3"></textarea>
-                                </div>
-                                <div class="form-actions">
-                                    <button type="submit" class="save-btn">Save Question</button>
-                                    <button type="button" onclick="hideAddQuestionForm()" class="cancel-btn">Cancel</button>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-                    
-                    <div id="submissions-modal" class="modal" style="display: none;">
-                        <div class="modal-content">
-                            <h3 id="submissions-title">Student Submissions</h3>
-                            <div id="submissions-list"></div>
-                            <button onclick="hideSubmissionsModal()" class="close-btn">Close</button>
-                        </div>
-                    </div>
+        <div class="header">
+            <h1>Teacher Dashboard</h1>
+            <button onclick="logout()" class="logout-btn">Logout</button>
+        </div>
+
+        <div class="dashboard">
+            <!-- Class Selection -->
+            <div class="class-selection">
+                <h2>Select a Class</h2>
+                <div class="class-grid">
+                    <button class="class-btn" onclick="selectClass('9A')">9A</button>
+                    <button class="class-btn" onclick="selectClass('9B')">9B</button>
+                    <button class="class-btn" onclick="selectClass('10A')">10A</button>
+                    <button class="class-btn" onclick="selectClass('10B')">10B</button>
+                    <button class="class-btn" onclick="selectClass('11A')">11A</button>
+                    <button class="class-btn" onclick="selectClass('11B')">11B</button>
+                    <button class="class-btn" onclick="selectClass('12A')">12A</button>
+                    <button class="class-btn" onclick="selectClass('12B')">12B</button>
                 </div>
             </div>
-        </main>
+
+            <!-- Selected Class Info -->
+            <div class="selected-class">
+                <h2 id="selected-class">Select a class to view questions</h2>
+                <button id="add-question-btn" onclick="showAddQuestionForm()" style="display: none;">Add Question</button>
+            </div>
+
+            <!-- Questions List -->
+            <div class="questions-section">
+                <h3>Questions</h3>
+                <div id="questions-container">
+                    <!-- Questions will be populated here -->
+                </div>
+            </div>
+        </div>
     </div>
-    
-    <script src="src/teacherManager.js"></script>
+
+    <!-- Add Question Modal -->
+    <div id="add-question-form" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Add New Question</h3>
+                <button onclick="hideAddQuestionForm()" class="close-btn">&times;</button>
+            </div>
+            <form onsubmit="addQuestion(event)">
+                <div class="form-group">
+                    <label for="question-title">Question Title:</label>
+                    <input type="text" id="question-title" required>
+                </div>
+                <div class="form-group">
+                    <label for="question-description">Description:</label>
+                    <textarea id="question-description" rows="3" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="question-starter">Starter Code (Optional):</label>
+                    <textarea id="question-starter" rows="5" placeholder="# Write starter code here"></textarea>
+                </div>
+                <div class="form-actions">
+                    <button type="button" onclick="hideAddQuestionForm()" class="cancel-btn">Cancel</button>
+                    <button type="submit" class="add-btn">Add Question</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Submissions Modal -->
+    <div id="submissions-modal" class="modal">
+        <div class="modal-content large">
+            <div class="modal-header">
+                <h3 id="submissions-title">Submissions</h3>
+                <button onclick="hideSubmissionsModal()" class="close-btn">&times;</button>
+            </div>
+            <div id="submissions-list">
+                <!-- Submissions will be populated here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/skulpt/0.11.1/skulpt.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/skulpt/0.11.1/skulpt-stdlib.js"></script>
     <script src="src/main.js"></script>
 </body>
 </html>
