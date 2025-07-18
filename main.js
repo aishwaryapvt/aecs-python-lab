@@ -1,117 +1,125 @@
-import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+let pyodide = null;
+let db = {};
+let currentStudent = null;
+const TEACHER_PASSWORD = "12345"; // Change as needed
 
-const supabase = createClient("https://ixxxlczhrmyisouoxdke.supabase.co", "YOUR_SUPABASE_ANON_KEY");
+// Load Pyodide
+async function loadPyodideAndInit() {
+  pyodide = await loadPyodide();
+}
+loadPyodideAndInit();
 
-// --- HTML Element References ---
-const studentLoginBox = document.getElementById("student-login");
-const teacherLoginBox = document.getElementById("teacher-login");
-const studentPanel = document.getElementById("student-panel");
-const teacherPanel = document.getElementById("teacher-panel");
+// Load from localStorage
+function loadData() {
+  const stored = localStorage.getItem("homeworkDB");
+  if (stored) db = JSON.parse(stored);
+}
 
-const teacherToggle = document.getElementById("teacher-login-toggle");
-const studentToggle = document.getElementById("student-login-toggle");
+// Save to localStorage
+function saveData() {
+  localStorage.setItem("homeworkDB", JSON.stringify(db));
+}
 
-let currentStudent = {};
+// UI Helpers
+function show(id) {
+  document.querySelectorAll(".container > div").forEach(div => div.classList.add("hidden"));
+  document.getElementById(id).classList.remove("hidden");
+}
 
-// --- Toggle Login Views ---
-teacherToggle.onclick = () => {
-  studentLoginBox.classList.add("hidden");
-  teacherLoginBox.classList.remove("hidden");
-};
+// Load homework for student
+function loadStudentPanel() {
+  const sid = `${currentStudent.name} (${currentStudent.roll}, ${currentStudent.class})`;
+  document.getElementById("student-id").textContent = sid;
+  document.getElementById("assigned-homework").textContent = db[currentStudent.class]?.homework || "No homework assigned.";
+  document.getElementById("student-code").value = db[currentStudent.class]?.submissions?.[sid] || "";
+  document.getElementById("code-output").textContent = "";
+  show("student-panel");
+}
 
-studentToggle.onclick = () => {
-  teacherLoginBox.classList.add("hidden");
-  studentLoginBox.classList.remove("hidden");
-};
+// Render all submissions for teacher
+function loadTeacherPanel() {
+  const out = document.getElementById("all-submissions");
+  out.innerHTML = "";
 
-// --- Student Login ---
-document.getElementById("student-login-btn").onclick = async () => {
+  Object.entries(db).forEach(([className, classData]) => {
+    if (classData.submissions && Object.keys(classData.submissions).length > 0) {
+      const classDiv = document.createElement("div");
+      classDiv.innerHTML = `<h4>Class ${className}</h4>`;
+      Object.entries(classData.submissions).forEach(([studentId, code]) => {
+        const pre = document.createElement("pre");
+        pre.textContent = `${studentId}:\n${code}`;
+        classDiv.appendChild(pre);
+      });
+      out.appendChild(classDiv);
+    }
+  });
+
+  show("teacher-panel");
+}
+
+// Event: Student Login
+document.getElementById("student-login").onclick = () => {
   const name = document.getElementById("student-name").value.trim();
-  const stdClass = document.getElementById("student-class").value.trim();
-  const roll = document.getElementById("roll-number").value.trim();
+  const roll = document.getElementById("student-roll").value.trim();
+  const className = document.getElementById("student-class").value.trim();
+  if (!name || !roll || !className) return alert("Fill all student fields");
 
-  if (!name || !stdClass || !roll) return alert("All fields are required");
-
-  currentStudent = { name, stdClass, roll };
-
-  // Get assigned homework
-  const { data, error } = await supabase
-    .from("homework")
-    .select("*")
-    .eq("class", stdClass)
-    .order("created_at", { ascending: false })
-    .limit(1);
-
-  document.getElementById("student-info").innerText = `${name} (Class ${stdClass}, Roll ${roll})`;
-  document.getElementById("assigned-homework").innerText = data?.[0]?.homework || "No homework assigned";
-
-  studentLoginBox.classList.add("hidden");
-  studentPanel.classList.remove("hidden");
+  currentStudent = { name, roll, class: className };
+  if (!db[className]) db[className] = { homework: "", submissions: {} };
+  saveData();
+  loadStudentPanel();
 };
 
-// --- Teacher Login ---
-document.getElementById("teacher-login-btn").onclick = () => {
-  const username = document.getElementById("teacher-username").value.trim();
-  const password = document.getElementById("teacher-password").value.trim();
+// Event: Show teacher login
+document.getElementById("show-teacher-login").onclick = () => show("teacher-login-form");
 
-  if (username === "admin" && password === "1234") {
-    teacherLoginBox.classList.add("hidden");
-    teacherPanel.classList.remove("hidden");
+// Event: Teacher Login
+document.getElementById("teacher-login").onclick = () => {
+  const pwd = document.getElementById("teacher-pass").value;
+  if (pwd === TEACHER_PASSWORD) {
+    loadTeacherPanel();
   } else {
-    alert("Invalid credentials");
+    alert("Incorrect password");
   }
 };
 
-// --- Assign Homework (Teacher) ---
-document.getElementById("set-homework").onclick = async () => {
-  const targetClass = document.getElementById("target-class").value.trim();
-  const homework = document.getElementById("homework-text").value.trim();
-  if (!targetClass || !homework) return alert("Please fill both fields");
-
-  const { error } = await supabase.from("homework").insert([
-    {
-      class: targetClass,
-      homework: homework,
-    },
-  ]);
-  if (error) return alert("Error assigning homework");
-  alert("Homework assigned successfully");
-};
-
-// --- Submit Homework (Student) ---
-document.getElementById("submit-code").onclick = async () => {
-  const code = document.getElementById("student-code").value.trim();
-  if (!code) return alert("Write code before submitting");
-
-  const { error } = await supabase.from("submissions").insert([
-    {
-      name: currentStudent.name,
-      class: currentStudent.stdClass,
-      roll: currentStudent.roll,
-      code: code,
-    },
-  ]);
-  if (error) return alert("Submission failed");
-  alert("Homework submitted successfully");
-};
-
-// --- Run Python Code using Pyodide ---
-let pyodideReady = false;
-let pyodide;
-
-async function loadPyodideAndRun() {
-  if (!pyodideReady) {
-    pyodide = await loadPyodide();
-    pyodideReady = true;
-  }
-
+// Event: Run Python Code
+document.getElementById("run-code").onclick = async () => {
   const code = document.getElementById("student-code").value;
   try {
     const result = await pyodide.runPythonAsync(code);
-    document.getElementById("output").innerText = result || "Code ran successfully";
+    document.getElementById("code-output").textContent = result;
   } catch (err) {
-    document.getElementById("output").innerText = "Error: " + err.message;
+    document.getElementById("code-output").textContent = err;
   }
-}
+};
 
-document.getElementById("run-code").onclick = loadPyodideAndRun;
+// Event: Submit Code
+document.getElementById("submit-code").onclick = () => {
+  const code = document.getElementById("student-code").value;
+  const sid = `${currentStudent.name} (${currentStudent.roll}, ${currentStudent.class})`;
+  db[currentStudent.class].submissions[sid] = code;
+  saveData();
+  alert("Submitted!");
+};
+
+// Event: Set Homework
+document.getElementById("set-homework").onclick = () => {
+  const className = document.getElementById("target-class").value.trim();
+  const hwText = document.getElementById("homework-text").value.trim();
+  if (!className || !hwText) return alert("Fill both fields");
+  if (!db[className]) db[className] = { homework: "", submissions: {} };
+  db[className].homework = hwText;
+  saveData();
+  alert("Homework assigned");
+  loadTeacherPanel();
+};
+
+// Back Buttons
+document.getElementById("back-to-home1").onclick = () => show("login-form");
+document.getElementById("back-to-home2").onclick = () => show("login-form");
+document.getElementById("back-to-home3").onclick = () => show("login-form");
+
+// Initial load
+loadData();
+show("login-form");

@@ -4,105 +4,128 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Python Homework Portal</title>
-  <script type="module" src="/main.js" defer></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm"></script>
-  <script src="https://cdn.jsdelivr.net/pyodide/v0.25.1/full/pyodide.js"></script>
-
+  <script type="module" src="main.js" defer></script>
   <style>
     body {
       font-family: Arial, sans-serif;
-      text-align: center;
+      padding: 20px;
+      background: #f0f0f0;
       margin: 0;
-      padding: 0;
     }
     header {
-      background: #f0f0f0;
-      padding: 15px 0;
-      font-size: 20px;
-      font-weight: bold;
+      text-align: center;
+      background-color: #2e3b4e;
+      color: white;
+      padding: 15px;
+      font-size: 1.4em;
     }
-    #app {
-      padding: 30px;
-    }
-    .hidden {
-      display: none;
-    }
-    .login-box {
-      margin: 20px auto;
-      max-width: 400px;
+    .container {
+      max-width: 800px;
+      margin: auto;
+      background: #fff;
       padding: 20px;
-      border: 1px solid #ccc;
-      border-radius: 8px;
+      border-radius: 10px;
     }
-    .footer {
-      margin-top: 50px;
-      font-size: 14px;
-      color: gray;
+    .hidden { display: none; }
+    textarea, input {
+      width: 100%;
+      margin-top: 5px;
+      margin-bottom: 10px;
+      padding: 10px;
+      font-family: monospace;
+      border: 1px solid #ccc;
+      border-radius: 5px;
     }
     button {
-      margin-top: 15px;
-      padding: 8px 16px;
-    }
-    input {
-      margin-bottom: 10px;
-      padding: 8px;
-      width: 90%;
-    }
-    a {
-      display: block;
-      margin-top: 10px;
-      text-decoration: underline;
+      padding: 10px 15px;
+      margin: 5px 0;
+      border: none;
+      background: #007BFF;
+      color: white;
+      border-radius: 5px;
       cursor: pointer;
+    }
+    button:hover {
+      background: #0056b3;
+    }
+    hr {
+      margin: 20px 0;
+    }
+    pre {
+      background: #f4f4f4;
+      padding: 10px;
+      white-space: pre-wrap;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+    .back-btn {
+      background: #6c757d;
     }
   </style>
 </head>
 <body>
-  <header>Atomic Energy Central School No. 3, Tarapur</header>
+  <header>
+    Atomic Energy Central School No. 3, Tarapur <br/>
+    <small>Made by Sona O.K.</small>
+  </header>
 
-  <div id="app">
-    <!-- Student Login Form -->
-    <div id="student-login" class="login-box">
+  <div class="container">
+
+    <!-- Home/Login -->
+    <div id="login-form">
       <h2>Student Login</h2>
-      <input type="text" id="student-name" placeholder="Your Name" /><br/>
-      <input type="text" id="student-class" placeholder="Class (e.g., 4)" /><br/>
-      <input type="text" id="roll-number" placeholder="Roll Number" /><br/>
-      <button id="student-login-btn">Login</button>
-      <a id="teacher-login-toggle">Login as Teacher</a>
+      <input type="text" id="student-name" placeholder="Name" />
+      <input type="text" id="student-roll" placeholder="Roll Number" />
+      <input type="text" id="student-class" placeholder="Class" />
+      <button id="student-login">Login as Student</button>
+
+      <hr />
+      <p style="text-align:center;">OR</p>
+      <button id="show-teacher-login">Login as Teacher</button>
     </div>
 
-    <!-- Teacher Login Form -->
-    <div id="teacher-login" class="login-box hidden">
+    <!-- Teacher Login -->
+    <div id="teacher-login-form" class="hidden">
       <h2>Teacher Login</h2>
-      <input type="text" id="teacher-username" placeholder="Username" /><br/>
-      <input type="password" id="teacher-password" placeholder="Password" /><br/>
-      <button id="teacher-login-btn">Login</button>
-      <a id="student-login-toggle">Back to Student Login</a>
+      <input type="password" id="teacher-pass" placeholder="Teacher Password"/>
+      <button id="teacher-login">Login</button>
+      <button class="back-btn" id="back-to-home1">Back</button>
     </div>
 
     <!-- Student Panel -->
     <div id="student-panel" class="hidden">
-      <h3>Welcome, <span id="student-info"></span></h3>
-      <h4>Assigned Homework</h4>
-      <div id="assigned-homework">Loading...</div>
-      <textarea id="student-code" rows="5" cols="40" placeholder="Write your Python code here"></textarea><br/>
+      <h2>Welcome, <span id="student-id"></span></h2>
+      <h3>Assigned Homework</h3>
+      <p id="assigned-homework"></p>
+
+      <h3>Your Code</h3>
+      <textarea id="student-code" rows="10" placeholder="Write Python code here..."></textarea>
       <button id="run-code">Run</button>
       <button id="submit-code">Submit</button>
-      <pre id="output"></pre><br/>
-      <button onclick="location.reload()">Back to Home</button>
+
+      <h3>Output</h3>
+      <pre id="code-output"></pre>
+      <button class="back-btn" id="back-to-home2">Back</button>
     </div>
 
     <!-- Teacher Panel -->
     <div id="teacher-panel" class="hidden">
+      <h2>Teacher Dashboard</h2>
+
       <h3>Assign Homework</h3>
-      <input type="text" id="target-class" placeholder="Class (e.g., 4)" /><br/>
-      <textarea id="homework-text" rows="5" cols="40" placeholder="Homework Instructions"></textarea><br/>
-      <button id="set-homework">Assign</button><br/><br/>
-      <button onclick="location.reload()">Back to Home</button>
+      <input type="text" id="target-class" placeholder="Class"/>
+      <textarea id="homework-text" rows="4" placeholder="Enter homework instructions..."></textarea>
+      <button id="set-homework">Assign</button>
+
+      <hr/>
+      <h3>Submissions</h3>
+      <div id="all-submissions"></div>
+
+      <button class="back-btn" id="back-to-home3">Back</button>
     </div>
+
   </div>
 
-  <div class="footer">
-    Made by Sona O.K.
-  </div>
+  <script src="https://cdn.jsdelivr.net/pyodide/v0.25.1/full/pyodide.js"></script>
 </body>
 </html>
