@@ -10,6 +10,7 @@
       font-family: Arial, sans-serif;
       padding: 20px;
       background: #f7f7f7;
+      color: #333;
     }
     .hidden { display: none; }
     textarea, input {
@@ -18,10 +19,20 @@
       margin-bottom: 10px;
       padding: 10px;
       font-family: monospace;
+      border-radius: 5px;
+      border: 1px solid #ccc;
     }
     button {
       padding: 10px 15px;
-      margin: 5px 0;
+      margin: 5px 5px 10px 0;
+      border: none;
+      background-color: #4CAF50;
+      color: white;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #45a049;
     }
     hr {
       margin: 20px 0;
@@ -30,33 +41,57 @@
       background: #eee;
       padding: 10px;
       white-space: pre-wrap;
+      border-radius: 5px;
+    }
+    .section {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      margin-bottom: 30px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.05);
+    }
+    footer {
+      text-align: center;
+      margin-top: 40px;
+      font-size: 0.9em;
+      color: #777;
     }
   </style>
 </head>
 <body>
   <h1>Python Homework Assignment Portal</h1>
+  <h3>Atomic Energy Central School No. 3, Tarapur</h3>
 
-  <div id="login-form">
+  <div id="login-form" class="section">
     <h2>Login</h2>
 
-    <h3>Student Login</h3>
-    <input type="text" id="student-name" placeholder="Name"/>
-    <input type="text" id="student-roll" placeholder="Roll Number"/>
-    <input type="text" id="student-class" placeholder="Class"/>
-    <button id="student-login">Login as Student</button>
+    <div>
+      <h3>Student Login</h3>
+      <label>Name</label>
+      <input type="text" id="student-name" placeholder="Enter your name"/>
+      <label>Roll Number</label>
+      <input type="text" id="student-roll" placeholder="Enter roll number"/>
+      <label>Class</label>
+      <input type="text" id="student-class" placeholder="Enter your class"/>
+      <button id="student-login">Login as Student</button>
+    </div>
 
     <hr/>
 
-    <h3>Teacher Login</h3>
-    <input type="password" id="teacher-pass" placeholder="Teacher Password"/>
-    <button id="teacher-login">Login as Teacher</button>
+    <div>
+      <h3>Teacher Login</h3>
+      <label>Password</label>
+      <input type="password" id="teacher-pass" placeholder="Enter teacher password"/>
+      <button id="teacher-login">Login as Teacher</button>
+    </div>
   </div>
 
   <!-- Student Panel -->
-  <div id="student-panel" class="hidden">
+  <div id="student-panel" class="hidden section">
     <h2>Welcome, <span id="student-id"></span></h2>
+    
     <h3>Assigned Homework</h3>
-    <p id="assigned-homework"></p>
+    <p id="assigned-homework">No homework assigned.</p>
 
     <h3>Your Code</h3>
     <textarea id="student-code" rows="10" placeholder="Write Python code here..."></textarea>
@@ -65,21 +100,32 @@
 
     <h3>Output</h3>
     <pre id="code-output"></pre>
+
+    <button onclick="location.reload()">← Back to Home</button>
   </div>
 
   <!-- Teacher Panel -->
-  <div id="teacher-panel" class="hidden">
+  <div id="teacher-panel" class="hidden section">
     <h2>Teacher Dashboard</h2>
 
     <h3>Assign Homework</h3>
-    <input type="text" id="target-class" placeholder="Class"/>
-    <textarea id="homework-text" rows="4" placeholder="Enter homework instructions..."></textarea>
+    <label>Class</label>
+    <input type="text" id="target-class" placeholder="Enter class to assign"/>
+    <label>Homework Instructions</label>
+    <textarea id="homework-text" rows="4" placeholder="Enter homework..."></textarea>
     <button id="set-homework">Assign</button>
 
     <hr/>
+
     <h3>Submissions</h3>
-    <div id="all-submissions"></div>
+    <div id="all-submissions">No submissions yet.</div>
+
+    <button onclick="location.reload()">← Back to Home</button>
   </div>
+
+  <footer>
+    Made by Sona O.K.
+  </footer>
 
   <!-- Pyodide Loader -->
   <script src="https://cdn.jsdelivr.net/pyodide/v0.25.1/full/pyodide.js"></script>
