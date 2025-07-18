@@ -2,63 +2,61 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Atomic Energy Central School - Python Homework Compiler</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Python Homework Compiler</title>
   <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/pyodide/v0.25.0/full/pyodide.js"></script>
 </head>
 <body>
   <header>
-    <h1>Atomic Energy Central School</h1>
+    <h1>Your School Name</h1>
     <h2>Python Homework Compiler</h2>
   </header>
-  <main>
-    <div id="login-page">
-      <h3>Student Login</h3>
-      <input type="text" id="student-name" placeholder="Name" required />
-      <input type="text" id="student-class" placeholder="Class" required />
-      <input type="text" id="student-roll" placeholder="Roll Number" required />
-      <button onclick="studentLogin()">Login</button>
-      <p class="link-like" onclick="showTeacherLogin()">Login as Teacher</p>
-    </div>
 
-    <div id="teacher-login" class="hidden">
+  <!-- Login Section -->
+  <div class="section" id="login">
+    <div class="card">
+      <h3>Student Login</h3>
+      <input id="student-name" placeholder="Name" />
+      <input id="student-class" placeholder="Class" />
+      <input id="student-roll" placeholder="Roll No." />
+      <button onclick="studentLogin()">Login</button>
+    </div>
+    <div class="card">
       <h3>Teacher Login</h3>
-      <input type="text" id="teacher-username" placeholder="Username" required />
-      <input type="password" id="teacher-password" placeholder="Password" required />
+      <input type="password" id="teacher-pass" placeholder="Password" />
       <button onclick="teacherLogin()">Login</button>
     </div>
+  </div>
 
-    <div id="student-dashboard" class="hidden">
-      <h3>Welcome, <span id="student-name-display"></span> (<span id="student-class-display"></span>)</h3>
+  <!-- Student Dashboard -->
+  <div class="section hidden" id="student-dashboard">
+    <div class="card">
+      <h3 id="student-welcome">Welcome</h3>
       <h4>Assigned Homework</h4>
-      <pre id="homework-display">Loading...</pre>
-
+      <pre id="student-homework" class="code-block"></pre>
       <h4>Your Code</h4>
-      <div id="editor-container"></div>
-      <button onclick="runCode()">▶ Run</button>
-      <button onclick="submitCode()">📤 Submit</button>
-
-      <h4>Output</h4>
-      <pre id="output">✅ No Output</pre>
+      <textarea id="code-editor" placeholder="Write your code here...">print("Hello World")</textarea>
+      <div class="btn-group">
+        <button onclick="runCode()">▶ Run</button>
+        <button onclick="submitCode()">📤 Submit</button>
+      </div>
+      <pre id="output" class="output-block">✅ Output will appear here</pre>
     </div>
+  </div>
 
-    <div id="teacher-dashboard" class="hidden">
-      <h3>Welcome, Teacher</h3>
-
-      <h4>Assign Homework</h4>
-      <input type="text" id="homework-class" placeholder="Class (e.g., 10A)" required />
-      <textarea id="homework-text" placeholder="Enter Python question with sample output..." rows="4"></textarea>
-      <button onclick="assignHomeworkToClass()">Assign Homework</button>
-
-      <h4>Test Code</h4>
-      <textarea id="teacher-code" placeholder="Write Python code to test..." rows="4"></textarea>
-      <button onclick="runTeacherCode()">Run Code</button>
-      <pre id="teacher-output">✅ No Output</pre>
+  <!-- Teacher Dashboard -->
+  <div class="section hidden" id="teacher-dashboard">
+    <div class="card">
+      <h3>Assign Homework</h3>
+      <input id="homework-class" placeholder="Class" />
+      <textarea id="homework-text" placeholder="Homework content..."></textarea>
+      <button onclick="assignHomeworkToClass()">Assign</button>
     </div>
-  </main>
-  <footer>
-    <p>Made by Sona O. K.</p>
-  </footer>
-  <script type="module" src="main.js"></script>
+  </div>
+
+  <footer>Made by Sona</footer>
+
+  <script src="main.js"></script>
 </body>
 </html>
