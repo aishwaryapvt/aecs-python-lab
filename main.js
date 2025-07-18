@@ -1,79 +1,72 @@
-let pyodide = null;
-let studentInfo = {};
-let homeworkData = {};
+// main.js
+let pyodideReadyPromise;
 
 async function loadPyodideAndPackages() {
-  pyodide = await loadPyodide();
-  console.log("✅ Pyodide loaded");
+  pyodideReadyPromise = loadPyodide();
+  await pyodideReadyPromise;
 }
 
 loadPyodideAndPackages();
 
-document.getElementById("student-login-btn").addEventListener("click", () => {
-  document.getElementById("login-screen").style.display = "none";
-  document.getElementById("student-login").style.display = "block";
-});
+document.addEventListener("DOMContentLoaded", () => {
+  const loginScreen = document.getElementById("login-screen");
+  const studentLogin = document.getElementById("student-login");
+  const studentDashboard = document.getElementById("student-dashboard");
+  const teacherButton = document.getElementById("teacher-login-btn");
+  const studentButton = document.getElementById("student-login-btn");
+  const studentSubmitBtn = document.getElementById("student-submit-btn");
+  const backToLoginBtn = document.getElementById("back-to-login");
 
-document.getElementById("teacher-login-btn").addEventListener("click", () => {
-  document.getElementById("login-screen").style.display = "none";
-  document.getElementById("teacher-dashboard").style.display = "block";
-});
+  // Navigate to teacher.html
+  teacherButton.addEventListener("click", () => {
+    window.location.href = "teacher.html";
+  });
 
-document.getElementById("submit-student-login").addEventListener("click", () => {
-  const name = document.getElementById("student-name").value.trim();
-  const cls = document.getElementById("student-class").value.trim();
-  const roll = document.getElementById("student-roll").value.trim();
+  // Show student login form
+  studentButton.addEventListener("click", () => {
+    loginScreen.style.display = "none";
+    studentLogin.style.display = "block";
+  });
 
-  if (!name || !cls || !roll) {
-    alert("Please fill all fields");
-    return;
-  }
+  // Student login submission
+  document.getElementById("student-login-form").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const name = document.getElementById("student-name").value.trim();
+    const studentClass = document.getElementById("student-class").value.trim();
+    const roll = document.getElementById("student-roll").value.trim();
+    if (name && studentClass && roll) {
+      studentLogin.style.display = "none";
+      studentDashboard.style.display = "block";
+      document.getElementById("student-id-display").textContent = `${name} | Class ${studentClass} | Roll ${roll}`;
+    }
+  });
 
-  studentInfo = { name, class: cls, roll };
-  document.getElementById("student-login").style.display = "none";
-  document.getElementById("student-dashboard").style.display = "block";
-  document.getElementById("student-greeting").textContent = `Welcome, ${name}`;
-  loadHomeworkForStudent(cls);
-});
+  // Go back to main login screen
+  backToLoginBtn.addEventListener("click", () => {
+    studentDashboard.style.display = "none";
+    loginScreen.style.display = "block";
+    document.getElementById("student-code").value = "";
+    document.getElementById("output").textContent = "";
+  });
 
-document.getElementById("assign-homework").addEventListener("click", () => {
-  const classInput = document.getElementById("homework-class").value.trim();
-  const task = document.getElementById("homework-text").value.trim();
+  // Run Python code using Pyodide
+  studentSubmitBtn.addEventListener("click", async () => {
+    const code = document.getElementById("student-code").value;
+    const outputElement = document.getElementById("output");
+    try {
+      await pyodideReadyPromise;
+      let result = await pyodide.runPythonAsync(`
+import sys
+from io import StringIO
+sys.stdout = sys.stderr = mystdout = StringIO()
 
-  if (!classInput || !task) {
-    alert("Class and Homework text required");
-    return;
-  }
+${code}
 
-  homeworkData[classInput] = task;
-  alert(`📚 Homework assigned for Class ${classInput}`);
-  document.getElementById("homework-class").value = "";
-  document.getElementById("homework-text").value = "";
-});
-
-function loadHomeworkForStudent(cls) {
-  const homeworkArea = document.getElementById("homework-area");
-  if (homeworkData[cls]) {
-    homeworkArea.textContent = homeworkData[cls];
-  } else {
-    homeworkArea.textContent = "No homework assigned for your class yet.";
-  }
-}
-
-document.getElementById("run-code").addEventListener("click", async () => {
-  const code = document.getElementById("student-code").value;
-  const outputArea = document.getElementById("code-output");
-
-  if (!pyodide) {
-    outputArea.textContent = "⏳ Pyodide is still loading...";
-    return;
-  }
-
-  try {
-    await pyodide.loadPackagesFromImports(code);
-    const result = pyodide.runPython(code);
-    outputArea.textContent = `✅ Output:\n${result}`;
-  } catch (err) {
-    outputArea.textContent = `❌ Error:\n${err}`;
-  }
+mystdout.getvalue()
+      `);
+      outputElement.textContent = result;
+    } catch (err) {
+      outputElement.textContent = "❌ Error:\n" + err;
+    }
+  });
 });

@@ -1,29 +1,51 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"/>
+  <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Teacher Dashboard</title>
-  <link rel="stylesheet" href="style.css"/>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <header>
-    <h1>Teacher Dashboard</h1>
+    <h1>Atomic Energy Central School No. 3, Tarapur</h1>
+    <h2>Python Homework Coding Platform</h2>
   </header>
 
-  <div class="container">
-    <h2>Assign Homework</h2>
-    <input type="text" id="assign-class" placeholder="Enter Class" />
-    <textarea id="homework-text" placeholder="Enter homework here..."></textarea>
-    <button onclick="assignHomework()">Assign</button>
-    <p id="assign-status"></p>
-    <button onclick="window.location.href='index.html'">Back to Home</button>
-  </div>
+  <main>
+    <section id="teacher-dashboard">
+      <h3>Assign Homework</h3>
+      <form id="homework-form">
+        <label for="homework-class">Class:</label><br>
+        <input type="text" id="homework-class" required><br><br>
+
+        <label for="homework-content">Python Homework:</label><br>
+        <textarea id="homework-content" rows="8" required></textarea><br>
+
+        <button type="submit">Assign Homework</button>
+      </form>
+
+      <p id="status-message"></p>
+    </section>
+
+    <button onclick="window.location.href='index.html'">🔙 Back to Login</button>
+  </main>
 
   <footer>
     <p>Made By : Mrs. Sona O.K., PGT Computer Science  </p>
   </footer>
 
-  <script src="main.js"></script>
+  <script>
+    document.getElementById("homework-form").addEventListener("submit", function(e) {
+      e.preventDefault();
+      const cls = document.getElementById("homework-class").value.trim();
+      const hw = document.getElementById("homework-content").value.trim();
+      if (cls && hw) {
+        localStorage.setItem(`homework-class-${cls}`, hw);
+        document.getElementById("status-message").textContent = `✅ Homework assigned to Class ${cls}`;
+        document.getElementById("homework-form").reset();
+      }
+    });
+  </script>
 </body>
 </html>
