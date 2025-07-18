@@ -57,7 +57,14 @@ async function main() {
   runCodeBtn.onclick = async () => {
     const code = document.getElementById("student-code").value;
     try {
-      const output = await pyodide.runPythonAsync(code);
+      await pyodide.runPythonAsync(`
+import sys
+from io import StringIO
+sys.stdout = mystdout = StringIO()
+` + code + `
+output = mystdout.getvalue()
+`);
+      const output = pyodide.globals.get("output");
       document.getElementById("code-output").innerText = output;
     } catch (err) {
       document.getElementById("code-output").innerText = err;
