@@ -1,98 +1,117 @@
-import { loadPyodide } from "https://cdn.jsdelivr.net/pyodide/v0.25.1/full/pyodide.mjs";
+import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
-let pyodide;
-let db = {
-  homework: {},
-  submissions: {},
+const supabase = createClient("https://ixxxlczhrmyisouoxdke.supabase.co", "YOUR_SUPABASE_ANON_KEY");
+
+// --- HTML Element References ---
+const studentLoginBox = document.getElementById("student-login");
+const teacherLoginBox = document.getElementById("teacher-login");
+const studentPanel = document.getElementById("student-panel");
+const teacherPanel = document.getElementById("teacher-panel");
+
+const teacherToggle = document.getElementById("teacher-login-toggle");
+const studentToggle = document.getElementById("student-login-toggle");
+
+let currentStudent = {};
+
+// --- Toggle Login Views ---
+teacherToggle.onclick = () => {
+  studentLoginBox.classList.add("hidden");
+  teacherLoginBox.classList.remove("hidden");
 };
 
-async function main() {
-  pyodide = await loadPyodide();
+studentToggle.onclick = () => {
+  teacherLoginBox.classList.add("hidden");
+  studentLoginBox.classList.remove("hidden");
+};
 
-  // UI elements
-  const studentLoginBtn = document.getElementById("student-login");
-  const teacherLoginBtn = document.getElementById("teacher-login");
-  const setHomeworkBtn = document.getElementById("set-homework");
-  const runCodeBtn = document.getElementById("run-code");
-  const submitCodeBtn = document.getElementById("submit-code");
+// --- Student Login ---
+document.getElementById("student-login-btn").onclick = async () => {
+  const name = document.getElementById("student-name").value.trim();
+  const stdClass = document.getElementById("student-class").value.trim();
+  const roll = document.getElementById("roll-number").value.trim();
 
-  const studentPanel = document.getElementById("student-panel");
-  const teacherPanel = document.getElementById("teacher-panel");
-  const loginForm = document.getElementById("login-form");
+  if (!name || !stdClass || !roll) return alert("All fields are required");
 
-  let currentStudent = null;
+  currentStudent = { name, stdClass, roll };
 
-  studentLoginBtn.onclick = () => {
-    const name = document.getElementById("student-name").value.trim();
-    const roll = document.getElementById("student-roll").value.trim();
-    const cls = document.getElementById("student-class").value.trim();
-    if (!name || !roll || !cls) return alert("Please fill all fields.");
-    currentStudent = { name, roll, cls };
-    document.getElementById("student-id").textContent = `${name} (${roll}, Class ${cls})`;
+  // Get assigned homework
+  const { data, error } = await supabase
+    .from("homework")
+    .select("*")
+    .eq("class", stdClass)
+    .order("created_at", { ascending: false })
+    .limit(1);
 
-    loginForm.classList.add("hidden");
-    studentPanel.classList.remove("hidden");
+  document.getElementById("student-info").innerText = `${name} (Class ${stdClass}, Roll ${roll})`;
+  document.getElementById("assigned-homework").innerText = data?.[0]?.homework || "No homework assigned";
 
-    // Show assigned homework
-    document.getElementById("assigned-homework").innerText =
-      db.homework[cls] || "No homework assigned.";
-  };
+  studentLoginBox.classList.add("hidden");
+  studentPanel.classList.remove("hidden");
+};
 
-  teacherLoginBtn.onclick = () => {
-    const pass = document.getElementById("teacher-pass").value;
-    if (pass !== "teacher123") return alert("Wrong password");
-    loginForm.classList.add("hidden");
+// --- Teacher Login ---
+document.getElementById("teacher-login-btn").onclick = () => {
+  const username = document.getElementById("teacher-username").value.trim();
+  const password = document.getElementById("teacher-password").value.trim();
+
+  if (username === "admin" && password === "1234") {
+    teacherLoginBox.classList.add("hidden");
     teacherPanel.classList.remove("hidden");
-    renderSubmissions();
-  };
+  } else {
+    alert("Invalid credentials");
+  }
+};
 
-  setHomeworkBtn.onclick = () => {
-    const cls = document.getElementById("target-class").value.trim();
-    const hw = document.getElementById("homework-text").value.trim();
-    if (!cls || !hw) return alert("Enter class and homework.");
-    db.homework[cls] = hw;
-    alert(`Assigned to Class ${cls}`);
-  };
+// --- Assign Homework (Teacher) ---
+document.getElementById("set-homework").onclick = async () => {
+  const targetClass = document.getElementById("target-class").value.trim();
+  const homework = document.getElementById("homework-text").value.trim();
+  if (!targetClass || !homework) return alert("Please fill both fields");
 
-  runCodeBtn.onclick = async () => {
-    const code = document.getElementById("student-code").value;
-    try {
-      await pyodide.runPythonAsync(`
-import sys
-from io import StringIO
-sys.stdout = mystdout = StringIO()
-` + code + `
-output = mystdout.getvalue()
-`);
-      const output = pyodide.globals.get("output");
-      document.getElementById("code-output").innerText = output;
-    } catch (err) {
-      document.getElementById("code-output").innerText = err;
-    }
-  };
+  const { error } = await supabase.from("homework").insert([
+    {
+      class: targetClass,
+      homework: homework,
+    },
+  ]);
+  if (error) return alert("Error assigning homework");
+  alert("Homework assigned successfully");
+};
 
-  submitCodeBtn.onclick = () => {
-    const code = document.getElementById("student-code").value;
-    const key = `${currentStudent.cls}-${currentStudent.roll}`;
-    db.submissions[key] = {
-      ...currentStudent,
-      code,
-      timestamp: new Date().toLocaleString(),
-    };
-    alert("Code submitted!");
-  };
+// --- Submit Homework (Student) ---
+document.getElementById("submit-code").onclick = async () => {
+  const code = document.getElementById("student-code").value.trim();
+  if (!code) return alert("Write code before submitting");
 
-  function renderSubmissions() {
-    const container = document.getElementById("all-submissions");
-    container.innerHTML = "";
-    for (const [key, data] of Object.entries(db.submissions)) {
-      const div = document.createElement("div");
-      div.innerHTML = `<strong>${data.name} (${data.roll}, Class ${data.cls})</strong><br/>
-        <em>Submitted at: ${data.timestamp}</em><br/>
-        <pre>${data.code}</pre><hr/>`;
-      container.appendChild(div);
-    }
+  const { error } = await supabase.from("submissions").insert([
+    {
+      name: currentStudent.name,
+      class: currentStudent.stdClass,
+      roll: currentStudent.roll,
+      code: code,
+    },
+  ]);
+  if (error) return alert("Submission failed");
+  alert("Homework submitted successfully");
+};
+
+// --- Run Python Code using Pyodide ---
+let pyodideReady = false;
+let pyodide;
+
+async function loadPyodideAndRun() {
+  if (!pyodideReady) {
+    pyodide = await loadPyodide();
+    pyodideReady = true;
+  }
+
+  const code = document.getElementById("student-code").value;
+  try {
+    const result = await pyodide.runPythonAsync(code);
+    document.getElementById("output").innerText = result || "Code ran successfully";
+  } catch (err) {
+    document.getElementById("output").innerText = "Error: " + err.message;
   }
 }
 
-main();
+document.getElementById("run-code").onclick = loadPyodideAndRun;
