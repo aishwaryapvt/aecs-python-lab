@@ -1,5 +1,7 @@
 // main.js
 let pyodideReadyPromise;
+let pyodide;
+let editor;
 
 async function loadPyodideAndPackages() {
   pyodideReadyPromise = loadPyodide();
