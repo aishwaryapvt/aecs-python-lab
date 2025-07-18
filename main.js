@@ -1,64 +1,163 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Python Homework Compiler</title>
-  <link rel="stylesheet" href="style.css" />
-  <script src="https://cdn.jsdelivr.net/pyodide/v0.23.4/full/pyodide.js"></script>
-</head>
-<body>
-  <header>
-    <h1>ABC Public School</h1>
-    <h2>Python Homework Compiler</h2>
-  </header>
+let pyodideReadyPromise;
 
-  <div id="login-screen">
-    <button id="student-login-link">Student Login</button>
-    <button id="teacher-login-link">Teacher Login</button>
-  </div>
+async function main() {
+  pyodideReadyPromise = loadPyodide();
+  await pyodideReadyPromise;
+}
+main();
 
-  <div id="student-login" class="hidden">
-    <input type="text" id="student-name" placeholder="Name" />
-    <input type="text" id="student-class" placeholder="Class" />
-    <input type="text" id="student-roll" placeholder="Roll Number" />
-    <button id="login-student">Login</button>
-    <button id="back-to-login-student">Back</button>
-  </div>
+function runCode() {
+  let code = document.getElementById("code-editor").value;
+  let output = document.getElementById("output");
+  pyodideReadyPromise.then((pyodide) => {
+    try {
+      let result = pyodide.runPython(code);
+      output.textContent = result === undefined ? "✅ No Output" : result;
+    } catch (err) {
+      output.textContent = `❌ Error: ${err}`;
+    }
+  });
+}
 
-  <div id="teacher-login" class="hidden">
-    <input type="password" id="teacher-pass" placeholder="Enter Teacher Password" />
-    <button id="login-teacher">Login</button>
-    <button id="back-to-login-teacher">Back</button>
-  </div>
+function runTeacherCode() {
+  let code = document.getElementById("teacher-code").value;
+  let output = document.getElementById("teacher-output");
+  pyodideReadyPromise.then((pyodide) => {
+    try {
+      let result = pyodide.runPython(code);
+      output.textContent = result === undefined ? "✅ No Output" : result;
+    } catch (err) {
+      output.textContent = `❌ Error: ${err}`;
+    }
+  });
+}
 
-  <div id="student-dashboard" class="hidden">
-    <h2>Welcome, <span id="student-name-display"></span> (<span id="student-class-display"></span>)</h2>
-    <h3>Assigned Homework</h3>
-    <pre id="homework-display"></pre>
+// UI State
+const loginScreen = document.getElementById("login-screen");
+const studentLogin = document.getElementById("student-login");
+const teacherLogin = document.getElementById("teacher-login");
+const studentDashboard = document.getElementById("student-dashboard");
+const teacherDashboard = document.getElementById("teacher-dashboard");
 
-    <h3>Your Code</h3>
-    <textarea id="code-editor">print("my world")</textarea>
-    <button id="run-student-code">▶ Run</button>
-    <button id="submit-student-code">📤 Submit</button>
-    <pre id="output">✅ No Output</pre>
-  </div>
+// Navigation Buttons
+const studentLoginLink = document.getElementById("student-login-link");
+const teacherLoginLink = document.getElementById("teacher-login-link");
+const backToLoginStudent = document.getElementById("back-to-login-student");
+const backToLoginTeacher = document.getElementById("back-to-login-teacher");
 
-  <div id="teacher-dashboard" class="hidden">
-    <h2>Teacher Dashboard</h2>
-    <input type="text" id="homework-class" placeholder="Class" />
-    <textarea id="homework-text" placeholder="Enter Homework"></textarea>
-    <button id="assign-homework">Assign Homework</button>
-    <h3>Try Student Code</h3>
-    <textarea id="teacher-code" placeholder="Write Python code..."></textarea>
-    <button id="run-teacher-code">▶ Run Code</button>
-    <pre id="teacher-output">✅ No Output</pre>
-  </div>
+// Login Buttons
+const loginStudentBtn = document.getElementById("login-student");
+const loginTeacherBtn = document.getElementById("login-teacher");
 
-  <footer>
-    <p>Made by Sona O. K.</p>
-  </footer>
+studentLoginLink.addEventListener("click", () => {
+  loginScreen.classList.add("hidden");
+  studentLogin.classList.remove("hidden");
+});
 
-  <script type="module" src="main.js"></script>
-</body>
-</html>
+teacherLoginLink.addEventListener("click", () => {
+  loginScreen.classList.add("hidden");
+  teacherLogin.classList.remove("hidden");
+});
+
+backToLoginStudent.addEventListener("click", () => {
+  studentLogin.classList.add("hidden");
+  loginScreen.classList.remove("hidden");
+});
+
+backToLoginTeacher.addEventListener("click", () => {
+  teacherLogin.classList.add("hidden");
+  loginScreen.classList.remove("hidden");
+});
+
+loginStudentBtn.addEventListener("click", () => {
+  const name = document.getElementById("student-name").value;
+  const studentClass = document.getElementById("student-class").value;
+  const roll = document.getElementById("student-roll").value;
+
+  if (!name || !studentClass || !roll) {
+    alert("Please fill all fields");
+    return;
+  }
+
+  studentLogin.classList.add("hidden");
+  studentDashboard.classList.remove("hidden");
+  document.getElementById("student-name-display").textContent = name;
+  document.getElementById("student-class-display").textContent = studentClass;
+
+  const homework = localStorage.getItem(`homework-${studentClass}`);
+  document.getElementById("homework-display").textContent = homework || "No homework assigned.";
+});
+
+loginTeacherBtn.addEventListener("click", () => {
+  const password = document.getElementById("teacher-pass").value;
+  if (password !== "admin123") {
+    alert("Wrong password");
+    return;
+  }
+  teacherLogin.classList.add("hidden");
+  teacherDashboard.classList.remove("hidden");
+  loadSubmissions();
+});
+
+function assignHomeworkToClass() {
+  const cls = document.getElementById("homework-class").value;
+  const hw = document.getElementById("homework-text").value;
+  if (!cls || !hw) {
+    alert("Please enter class and homework.");
+    return;
+  }
+  localStorage.setItem(`homework-${cls}`, hw);
+  alert("Homework Assigned!");
+  updateReviewClassSelect();
+}
+
+function submitCode() {
+  const name = document.getElementById("student-name").value;
+  const studentClass = document.getElementById("student-class").value;
+  const roll = document.getElementById("student-roll").value;
+  const code = document.getElementById("code-editor").value;
+
+  const key = `submission-${studentClass}-${roll}`;
+  localStorage.setItem(key, JSON.stringify({ name, studentClass, roll, code }));
+  alert("Submitted!");
+}
+
+function loadSubmissions() {
+  updateReviewClassSelect();
+  document.getElementById("review-class-select").addEventListener("change", function () {
+    const cls = this.value;
+    const list = document.getElementById("submission-list");
+    list.innerHTML = "";
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key.startsWith(`submission-${cls}`)) {
+        const data = JSON.parse(localStorage.getItem(key));
+        const item = document.createElement("li");
+        item.textContent = `${data.name} (Roll ${data.roll})`;
+        item.addEventListener("click", () => {
+          document.getElementById("teacher-code").value = data.code;
+        });
+        list.appendChild(item);
+      }
+    }
+  });
+}
+
+function updateReviewClassSelect() {
+  const select = document.getElementById("review-class-select");
+  const classes = new Set();
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key.startsWith("submission-")) {
+      const cls = key.split("-")[1];
+      classes.add(cls);
+    }
+  }
+  select.innerHTML = "";
+  classes.forEach(cls => {
+    const option = document.createElement("option");
+    option.value = cls;
+    option.textContent = cls;
+    select.appendChild(option);
+  });
+}
