@@ -1,163 +1,161 @@
-let pyodideReadyPromise;
+let pyodideReadyPromise = loadPyodideAndPackages();
 
-async function main() {
-  pyodideReadyPromise = loadPyodide();
-  await pyodideReadyPromise;
-}
-main();
+let homeworkData = {};
+let submissions = {};
 
-function runCode() {
-  let code = document.getElementById("code-editor").value;
-  let output = document.getElementById("output");
-  pyodideReadyPromise.then((pyodide) => {
-    try {
-      let result = pyodide.runPython(code);
-      output.textContent = result === undefined ? "✅ No Output" : result;
-    } catch (err) {
-      output.textContent = `❌ Error: ${err}`;
-    }
-  });
+async function loadPyodideAndPackages() {
+  let pyodide = await loadPyodide();
+  await pyodide.loadPackage(["micropip"]);
+  await pyodide.runPythonAsync(`
+    import sys
+    import io
+    sys.stdout = io.StringIO()
+    sys.stderr = io.StringIO()
+  `);
+  return pyodide;
 }
 
-function runTeacherCode() {
-  let code = document.getElementById("teacher-code").value;
-  let output = document.getElementById("teacher-output");
-  pyodideReadyPromise.then((pyodide) => {
-    try {
-      let result = pyodide.runPython(code);
-      output.textContent = result === undefined ? "✅ No Output" : result;
-    } catch (err) {
-      output.textContent = `❌ Error: ${err}`;
-    }
-  });
-}
+// ------------------ Student Login Flow ------------------
+document.getElementById("student-login-link").onclick = () => {
+  document.getElementById("login-screen").classList.add("hidden");
+  document.getElementById("student-login").classList.remove("hidden");
+};
 
-// UI State
-const loginScreen = document.getElementById("login-screen");
-const studentLogin = document.getElementById("student-login");
-const teacherLogin = document.getElementById("teacher-login");
-const studentDashboard = document.getElementById("student-dashboard");
-const teacherDashboard = document.getElementById("teacher-dashboard");
+document.getElementById("back-to-login-student").onclick = () => {
+  document.getElementById("student-login").classList.add("hidden");
+  document.getElementById("login-screen").classList.remove("hidden");
+};
 
-// Navigation Buttons
-const studentLoginLink = document.getElementById("student-login-link");
-const teacherLoginLink = document.getElementById("teacher-login-link");
-const backToLoginStudent = document.getElementById("back-to-login-student");
-const backToLoginTeacher = document.getElementById("back-to-login-teacher");
+document.getElementById("login-student").onclick = () => {
+  const name = document.getElementById("student-name").value.trim();
+  const className = document.getElementById("student-class").value.trim();
+  const roll = document.getElementById("student-roll").value.trim();
 
-// Login Buttons
-const loginStudentBtn = document.getElementById("login-student");
-const loginTeacherBtn = document.getElementById("login-teacher");
+  if (!name || !className || !roll) return alert("Please fill all fields!");
 
-studentLoginLink.addEventListener("click", () => {
-  loginScreen.classList.add("hidden");
-  studentLogin.classList.remove("hidden");
-});
-
-teacherLoginLink.addEventListener("click", () => {
-  loginScreen.classList.add("hidden");
-  teacherLogin.classList.remove("hidden");
-});
-
-backToLoginStudent.addEventListener("click", () => {
-  studentLogin.classList.add("hidden");
-  loginScreen.classList.remove("hidden");
-});
-
-backToLoginTeacher.addEventListener("click", () => {
-  teacherLogin.classList.add("hidden");
-  loginScreen.classList.remove("hidden");
-});
-
-loginStudentBtn.addEventListener("click", () => {
-  const name = document.getElementById("student-name").value;
-  const studentClass = document.getElementById("student-class").value;
-  const roll = document.getElementById("student-roll").value;
-
-  if (!name || !studentClass || !roll) {
-    alert("Please fill all fields");
-    return;
-  }
-
-  studentLogin.classList.add("hidden");
-  studentDashboard.classList.remove("hidden");
   document.getElementById("student-name-display").textContent = name;
-  document.getElementById("student-class-display").textContent = studentClass;
+  document.getElementById("student-class-display").textContent = className;
 
-  const homework = localStorage.getItem(`homework-${studentClass}`);
-  document.getElementById("homework-display").textContent = homework || "No homework assigned.";
-});
+  document.getElementById("student-login").classList.add("hidden");
+  document.getElementById("student-dashboard").classList.remove("hidden");
 
-loginTeacherBtn.addEventListener("click", () => {
+  const homework = homeworkData[className] || "No homework assigned.";
+  document.getElementById("homework-display").textContent = homework;
+};
+
+// ------------------ Teacher Login Flow ------------------
+document.getElementById("teacher-login-link").onclick = () => {
+  document.getElementById("login-screen").classList.add("hidden");
+  document.getElementById("teacher-login").classList.remove("hidden");
+};
+
+document.getElementById("back-to-login-teacher").onclick = () => {
+  document.getElementById("teacher-login").classList.add("hidden");
+  document.getElementById("login-screen").classList.remove("hidden");
+};
+
+document.getElementById("login-teacher").onclick = () => {
   const password = document.getElementById("teacher-pass").value;
-  if (password !== "admin123") {
-    alert("Wrong password");
-    return;
-  }
-  teacherLogin.classList.add("hidden");
-  teacherDashboard.classList.remove("hidden");
-  loadSubmissions();
-});
+  if (password !== "teacher123") return alert("Incorrect password!");
+  document.getElementById("teacher-login").classList.add("hidden");
+  document.getElementById("teacher-dashboard").classList.remove("hidden");
+  updateClassDropdown();
+};
 
+// ------------------ Assign Homework ------------------
 function assignHomeworkToClass() {
-  const cls = document.getElementById("homework-class").value;
-  const hw = document.getElementById("homework-text").value;
-  if (!cls || !hw) {
-    alert("Please enter class and homework.");
-    return;
-  }
-  localStorage.setItem(`homework-${cls}`, hw);
-  alert("Homework Assigned!");
-  updateReviewClassSelect();
+  const className = document.getElementById("homework-class").value.trim();
+  const homework = document.getElementById("homework-text").value.trim();
+  if (!className || !homework) return alert("Enter class and homework!");
+  homeworkData[className] = homework;
+  alert("Homework assigned!");
+  updateClassDropdown();
 }
 
+// ------------------ Submit Code ------------------
 function submitCode() {
-  const name = document.getElementById("student-name").value;
-  const studentClass = document.getElementById("student-class").value;
-  const roll = document.getElementById("student-roll").value;
+  const name = document.getElementById("student-name").value.trim();
+  const className = document.getElementById("student-class").value.trim();
+  const roll = document.getElementById("student-roll").value.trim();
   const code = document.getElementById("code-editor").value;
 
-  const key = `submission-${studentClass}-${roll}`;
-  localStorage.setItem(key, JSON.stringify({ name, studentClass, roll, code }));
-  alert("Submitted!");
+  const studentId = `${roll}-${name}`;
+  if (!submissions[className]) submissions[className] = {};
+  submissions[className][studentId] = { name, roll, code };
+
+  alert("Code submitted successfully!");
 }
 
-function loadSubmissions() {
-  updateReviewClassSelect();
-  document.getElementById("review-class-select").addEventListener("change", function () {
-    const cls = this.value;
-    const list = document.getElementById("submission-list");
-    list.innerHTML = "";
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (key.startsWith(`submission-${cls}`)) {
-        const data = JSON.parse(localStorage.getItem(key));
-        const item = document.createElement("li");
-        item.textContent = `${data.name} (Roll ${data.roll})`;
-        item.addEventListener("click", () => {
-          document.getElementById("teacher-code").value = data.code;
-        });
-        list.appendChild(item);
-      }
-    }
-  });
-}
+// ------------------ Review Submissions ------------------
+function updateClassDropdown() {
+  const dropdown = document.getElementById("review-class-select");
+  dropdown.innerHTML = "";
 
-function updateReviewClassSelect() {
-  const select = document.getElementById("review-class-select");
-  const classes = new Set();
-  for (let i = 0; i < localStorage.length; i++) {
-    const key = localStorage.key(i);
-    if (key.startsWith("submission-")) {
-      const cls = key.split("-")[1];
-      classes.add(cls);
-    }
-  }
-  select.innerHTML = "";
-  classes.forEach(cls => {
+  Object.keys(submissions).forEach((cls) => {
     const option = document.createElement("option");
     option.value = cls;
     option.textContent = cls;
-    select.appendChild(option);
+    dropdown.appendChild(option);
   });
+
+  dropdown.onchange = () => {
+    const cls = dropdown.value;
+    const ul = document.getElementById("submission-list");
+    ul.innerHTML = "";
+    if (!submissions[cls]) return;
+
+    Object.entries(submissions[cls]).forEach(([id, { name, code }]) => {
+      const li = document.createElement("li");
+      li.innerHTML = `<strong>${name}</strong><pre>${code}</pre>`;
+      ul.appendChild(li);
+    });
+  };
+
+  dropdown.dispatchEvent(new Event("change"));
+}
+
+// ------------------ Python Code Execution ------------------
+async function runCode() {
+  const code = document.getElementById("code-editor").value;
+  const pyodide = await pyodideReadyPromise;
+
+  try {
+    await pyodide.runPythonAsync(`
+      import sys
+      sys.stdout = sys.__stdout__ = sys.stderr = sys.__stderr__ = None
+      from js import console
+      import io
+      sys.stdout = io.StringIO()
+      sys.stderr = io.StringIO()
+      ${code}
+    `);
+    const output = await pyodide.runPythonAsync("sys.stdout.getvalue()");
+    const error = await pyodide.runPythonAsync("sys.stderr.getvalue()");
+    document.getElementById("output").textContent = (output + error).trim();
+  } catch (err) {
+    document.getElementById("output").textContent = `❌ Error:\n${err}`;
+  }
+}
+
+// ------------------ Teacher Code Runner ------------------
+async function runTeacherCode() {
+  const code = document.getElementById("teacher-code").value;
+  const pyodide = await pyodideReadyPromise;
+
+  try {
+    await pyodide.runPythonAsync(`
+      import sys
+      sys.stdout = sys.__stdout__ = sys.stderr = sys.__stderr__ = None
+      from js import console
+      import io
+      sys.stdout = io.StringIO()
+      sys.stderr = io.StringIO()
+      ${code}
+    `);
+    const output = await pyodide.runPythonAsync("sys.stdout.getvalue()");
+    const error = await pyodide.runPythonAsync("sys.stderr.getvalue()");
+    document.getElementById("teacher-output").textContent = (output + error).trim();
+  } catch (err) {
+    document.getElementById("teacher-output").textContent = `❌ Error:\n${err}`;
+  }
 }
