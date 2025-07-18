@@ -1,72 +1,79 @@
-// main.js
-
-let pyodide;
+let pyodide = null;
+let studentInfo = {};
+let homeworkData = {};
 
 async function loadPyodideAndPackages() {
   pyodide = await loadPyodide();
-  console.log("Pyodide loaded");
+  console.log("✅ Pyodide loaded");
 }
 
 loadPyodideAndPackages();
 
-document.addEventListener("DOMContentLoaded", () => {
-  const loginScreen = document.getElementById("login-screen");
-  const studentLogin = document.getElementById("student-login");
-  const studentDashboard = document.getElementById("student-dashboard");
-  const teacherDashboard = document.getElementById("teacher-dashboard");
+document.getElementById("student-login-btn").addEventListener("click", () => {
+  document.getElementById("login-screen").style.display = "none";
+  document.getElementById("student-login").style.display = "block";
+});
 
-  document.getElementById("student-login-btn").addEventListener("click", () => {
-    loginScreen.style.display = "none";
-    studentLogin.style.display = "block";
-  });
+document.getElementById("teacher-login-btn").addEventListener("click", () => {
+  document.getElementById("login-screen").style.display = "none";
+  document.getElementById("teacher-dashboard").style.display = "block";
+});
 
-  document.getElementById("teacher-login-btn").addEventListener("click", () => {
-    window.location.href = "teacher.html";
-  });
+document.getElementById("submit-student-login").addEventListener("click", () => {
+  const name = document.getElementById("student-name").value.trim();
+  const cls = document.getElementById("student-class").value.trim();
+  const roll = document.getElementById("student-roll").value.trim();
 
-  document.getElementById("student-submit-btn").addEventListener("click", () => {
-    const name = document.getElementById("student-name").value;
-    const studentClass = document.getElementById("student-class").value;
-    const roll = document.getElementById("student-roll").value;
+  if (!name || !cls || !roll) {
+    alert("Please fill all fields");
+    return;
+  }
 
-    if (name && studentClass && roll) {
-      document.getElementById("student-name-display").textContent = name;
-      loginScreen.style.display = "none";
-      studentLogin.style.display = "none";
-      studentDashboard.style.display = "block";
-    } else {
-      alert("Please fill in all student details.");
-    }
-  });
+  studentInfo = { name, class: cls, roll };
+  document.getElementById("student-login").style.display = "none";
+  document.getElementById("student-dashboard").style.display = "block";
+  document.getElementById("student-greeting").textContent = `Welcome, ${name}`;
+  loadHomeworkForStudent(cls);
+});
 
-  document.getElementById("back-btn").addEventListener("click", () => {
-    studentDashboard.style.display = "none";
-    loginScreen.style.display = "block";
-  });
+document.getElementById("assign-homework").addEventListener("click", () => {
+  const classInput = document.getElementById("homework-class").value.trim();
+  const task = document.getElementById("homework-text").value.trim();
 
-  document.getElementById("run-code").addEventListener("click", async () => {
-    const code = document.getElementById("code-input").value;
-    const outputElem = document.getElementById("output");
+  if (!classInput || !task) {
+    alert("Class and Homework text required");
+    return;
+  }
 
-    try {
-      let output = await pyodide.runPythonAsync(`
-import sys
-from io import StringIO
+  homeworkData[classInput] = task;
+  alert(`📚 Homework assigned for Class ${classInput}`);
+  document.getElementById("homework-class").value = "";
+  document.getElementById("homework-text").value = "";
+});
 
-stdout = sys.stdout
-stderr = sys.stderr
-sys.stdout = sys.stderr = StringIO()
+function loadHomeworkForStudent(cls) {
+  const homeworkArea = document.getElementById("homework-area");
+  if (homeworkData[cls]) {
+    homeworkArea.textContent = homeworkData[cls];
+  } else {
+    homeworkArea.textContent = "No homework assigned for your class yet.";
+  }
+}
 
-try:
-${code.split('\n').map(line => '  ' + line).join('\n')}
-except Exception as e:
-  print(e)
+document.getElementById("run-code").addEventListener("click", async () => {
+  const code = document.getElementById("student-code").value;
+  const outputArea = document.getElementById("code-output");
 
-sys.stdout.getvalue()
-      `);
-      outputElem.textContent = output;
-    } catch (err) {
-      outputElem.textContent = `❌ Error:\n${err}`;
-    }
-  });
+  if (!pyodide) {
+    outputArea.textContent = "⏳ Pyodide is still loading...";
+    return;
+  }
+
+  try {
+    await pyodide.loadPackagesFromImports(code);
+    const result = pyodide.runPython(code);
+    outputArea.textContent = `✅ Output:\n${result}`;
+  } catch (err) {
+    outputArea.textContent = `❌ Error:\n${err}`;
+  }
 });
